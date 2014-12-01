@@ -25,6 +25,8 @@ int kmain ( void )
 	create_process(funcA, NULL, STACK_SIZE);
 	start_sched();
 	//ctx_switch();
+	
+	//sys_wait(3);
 
 	while (1)
 		;

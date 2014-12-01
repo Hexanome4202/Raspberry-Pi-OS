@@ -60,7 +60,20 @@ void start_current_process(){
 }
 
 void elect(){
+
+	if(current_process->state==WAITING){
+		
+		if(current_process->sleepingTime>0){
+			(current_process->sleepingTime)--;
+		}else{
+			current_process->state=READY;
+		}
+
+	}
+	
 	current_process = scheduler();
+		
+	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepngTime
 
 	//terminaison
 	while(current_process->state == TERMINATED){

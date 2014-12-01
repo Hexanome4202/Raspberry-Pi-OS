@@ -17,6 +17,7 @@ struct ctx_s {
 typedef struct pcb_s pcb_s;
 struct pcb_s {
 	State state;
+	unsigned int sleepingTime;
 	func_t function;
 	void* functionArgs; 
 	ctx_s* ctx;
