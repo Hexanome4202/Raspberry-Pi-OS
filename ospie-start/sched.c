@@ -10,15 +10,25 @@ void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
 
 
 void init_sched(){
-	scheduler_function = sched_round_robin;
-	queue_round_robin->first = NULL;
+	scheduler_function = sched_fixed_priority;
+
+	if(scheduler_function == sched_round_robin){
+		queue_round_robin->first = NULL;
+	}
+	else if(scheduler_function == sched_fixed_priority){
+		int i=0;
+		for(i; i<PRIORITY_NUM; ++i){
+			queue_fixed_priority[i]->first = NULL;
+		}
+	}
 }
 
-void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize){
+void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priority priority){
 	
 	aPCB->state = NEW;
 	aPCB->function = f;
 	aPCB->functionArgs = args;
+	aPCB->priority = priority;
 
 	ctx_s* ctx = phyAlloc_alloc(sizeof(ctx_s));
 	init_ctx(ctx, stackSize);
@@ -27,28 +37,37 @@ void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize){
 	aPCB->stack_size = stackSize;
 }
 
-void create_process(func_t f, void* args, unsigned int stack_size){
+void create_process(func_t f, void* args, unsigned int stack_size, Priority priority){
 	DISABLE_IRQ();
 
 	pcb_s* pcb = phyAlloc_alloc(sizeof(pcb_s));
 
-	init_pcb(pcb, f, args, stack_size);
+	init_pcb(pcb, f, args, stack_size, priority);
 
-	if (queue_round_robin->first == NULL){
-		queue_round_robin->first = pcb;
-		queue_round_robin->last = pcb;
+	if(scheduler_function == sched_round_robin){
+		add_pcb(queue_round_robin,pcb);
+	}
+	else if(scheduler_function == sched_fixed_priority){
+		add_pcb(queue_fixed_priority[priority], pcb);
+	}
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();
+}
+
+void add_pcb(queue* queue, pcb_s* pcb){
+	if (queue->first == NULL){
+		queue->first = pcb;
+		queue->last = pcb;
 		pcb->next=pcb;
 		pcb->previous=pcb;
 	}
 	else{
-		pcb->previous=queue_round_robin->last;
-		queue_round_robin->last->next = pcb;
-		queue_round_robin->last = pcb;
-		queue_round_robin->last->next = queue_round_robin->first;
-		queue_round_robin->first->previous= queue_round_robin->last;
+		pcb->previous=queue->last;
+		queue->last->next = pcb;
+		queue->last = pcb;
+		queue->last->next = queue->first;
+		queue->first->previous= queue->last;
 	}
-	set_tick_and_enable_timer();
-	ENABLE_IRQ();
 }
 
 void start_current_process(){
@@ -56,16 +75,30 @@ void start_current_process(){
 	current_process->function(current_process->functionArgs);
 	
 	current_process->state = TERMINATED;
+	//FIXME : crap -> can be interrupted
 	ctx_switch();
 }
 
 void elect(){
 	current_process = scheduler();
+}
+
+pcb_s* scheduler(){
+	return scheduler_function();
+}
+
+pcb_s* sched_round_robin(){
+	//TODO : only choose a READY proccess 
+	// if no processes found -> run IDLE process (has to be created at init)
+
+	current_process = current_process->next;
 
 	//terminaison
+	//TODO : add IDLE process when every process is terminated
 	while(current_process->state == TERMINATED){
 		pcb_s* tmp_process = current_process->next;
 
+		//TODO : first and last of queue need to be updated
 		current_process->previous->next = current_process->next;
 		current_process->next->previous = current_process->previous;
 
@@ -75,19 +108,49 @@ void elect(){
 	
 		current_process = tmp_process;
 	}
+	return current_process;
 }
 
-pcb_s* scheduler(){
-	return scheduler_function();
-}
-
-pcb_s* sched_round_robin(){
-	return current_process->next;
+void cleanTerminated(){
+	int i = 0;
+	for(i; i<PRIORITY_NUM; ++i){
+		pcb_s* process = queue_fixed_priority[i]->first;
+		do{
+			if(process->state == TERMINATED){
+				//TODO : suppress
+			}
+			process = process->next;
+		}while(process != queue_fixed_priority[i]->first);
+	}
 }
 
 pcb_s* sched_fixed_priority(){
 
-	return NULL;
+	cleanTerminated();
+
+	// TODO : handle state
+	int i = PRIORITY_NUM-1;
+	int j = current_process->priority;
+	for(i; i>j; --i){
+		if(queue_fixed_priority[i]->first != NULL){
+			return queue_fixed_priority[i]->first;
+		}
+	}
+	pcb_s* old = current_process;
+	current_process = current_process->next;
+	while(current_process->state == TERMINATED && current_process != old) {
+		current_process = current_process->next;
+	}
+
+	if(current_process == old && current_process->state == TERMINATED) {
+		for(i = i - 1; i >= 0; --i) {
+			if(queue_fixed_priority[i]->first != NULL){
+				return queue_fixed_priority[i]->first;
+			}
+		}
+		// return IDLE
+	}
+	return current_process;
 }
 
 void start_sched(){

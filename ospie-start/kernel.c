@@ -21,8 +21,8 @@ int kmain ( void )
 {
 	init_hw();
 	init_sched();
-	create_process(funcB, NULL, STACK_SIZE);
-	create_process(funcA, NULL, STACK_SIZE);
+	create_process(funcB, NULL, STACK_SIZE, NORMAL);
+	create_process(funcA, NULL, STACK_SIZE, LOW);
 	start_sched();
 	//ctx_switch();
 
