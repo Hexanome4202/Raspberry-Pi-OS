@@ -5,6 +5,7 @@
 #define NULL 0
 
 typedef void (*func_t) (void*);
+
 typedef enum {NEW, READY, RUNNING, WAITING, TERMINATED} State;
 
 typedef struct ctx_s ctx_s;
@@ -24,12 +25,21 @@ struct pcb_s {
 	pcb_s* previous;
 };
 
+typedef pcb_s* (*sched_func) ();
+
 pcb_s* current_process;
 
-pcb_s* first;
-pcb_s* last;
+typedef struct queue queue;
+struct queue {
+	pcb_s* first;
+	pcb_s* last;
+};
 
-void init_ctx(struct ctx_s*, unsigned int);
+queue* queue_round_robin;
+
+void init_ctx(ctx_s*, unsigned int);
+
+void init_sched();
 
 void init_pcb(pcb_s*, func_t, void*, unsigned int);
 
@@ -39,11 +49,18 @@ void start_current_process();
 
 void elect();
 
+pcb_s* scheduler();
+
+pcb_s* sched_round_robin();
+
+pcb_s* sched_fixed_priority();
+
 void start_sched();
 
 void __attribute__ ((naked)) ctx_switch_from_irq();
 
 void __attribute__ ((naked)) ctx_switch();
 
-#endif
+sched_func scheduler_function;
 
+#endif

@@ -8,6 +8,12 @@ void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
         ctx->lr = (unsigned int) start_current_process;
 }
 
+
+void init_sched(){
+	scheduler_function = sched_round_robin;
+	queue_round_robin->first = NULL;
+}
+
 void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize){
 	
 	aPCB->state = NEW;
@@ -28,18 +34,18 @@ void create_process(func_t f, void* args, unsigned int stack_size){
 
 	init_pcb(pcb, f, args, stack_size);
 
-	if (first == NULL){
-		first = pcb;
-		last = pcb;
+	if (queue_round_robin->first == NULL){
+		queue_round_robin->first = pcb;
+		queue_round_robin->last = pcb;
 		pcb->next=pcb;
 		pcb->previous=pcb;
 	}
 	else{
-		pcb->previous=last;
-		last->next = pcb;
-		last = pcb;
-		last->next = first;
-		first->previous=last;
+		pcb->previous=queue_round_robin->last;
+		queue_round_robin->last->next = pcb;
+		queue_round_robin->last = pcb;
+		queue_round_robin->last->next = queue_round_robin->first;
+		queue_round_robin->first->previous= queue_round_robin->last;
 	}
 	set_tick_and_enable_timer();
 	ENABLE_IRQ();
@@ -54,7 +60,7 @@ void start_current_process(){
 }
 
 void elect(){
-	current_process=current_process->next;
+	current_process = scheduler();
 
 	//terminaison
 	while(current_process->state == TERMINATED){
@@ -71,8 +77,21 @@ void elect(){
 	}
 }
 
+pcb_s* scheduler(){
+	return scheduler_function();
+}
+
+pcb_s* sched_round_robin(){
+	return current_process->next;
+}
+
+pcb_s* sched_fixed_priority(){
+
+	return NULL;
+}
+
 void start_sched(){
-	current_process=first;
+	current_process=queue_round_robin->first;
 	ENABLE_IRQ();
 	set_tick_and_enable_timer();
 }
@@ -131,6 +150,3 @@ void __attribute__ ((naked)) ctx_switch(){
 	__asm("bx lr");
 	
 }
-
-
-
