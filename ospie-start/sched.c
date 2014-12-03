@@ -2,14 +2,19 @@
 #include "phyAlloc.h"
 #include "hw.h"
 
+void funct_idle(){
+	while(1);
+}
 
 void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
         ctx->sp = (unsigned int)phyAlloc_alloc(stack_size) + stack_size - 14*4;
         ctx->lr = (unsigned int) start_current_process;
 }
 
-
 void init_sched(){
+
+	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
+
 	scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
@@ -18,6 +23,7 @@ void init_sched(){
 	else if(scheduler_function == sched_fixed_priority){
 		int i=0;
 		for(i; i<PRIORITY_NUM; ++i){
+			queue_fixed_priority[i] = phyAlloc_alloc(sizeof(queue));
 			queue_fixed_priority[i]->first = NULL;
 		}
 	}
@@ -112,49 +118,148 @@ pcb_s* sched_round_robin(){
 }
 
 void cleanTerminated(){
+
 	int i = 0;
 	for(i; i<PRIORITY_NUM; ++i){
-		pcb_s* process = queue_fixed_priority[i]->first;
-		do{
-			if(process->state == TERMINATED){
-				//TODO : suppress
-			}
-			process = process->next;
-		}while(process != queue_fixed_priority[i]->first);
+		pcb_s* process_it = queue_fixed_priority[i]->first;
+		if(process_it != NULL){
+			do{
+				if(process_it->state == TERMINATED && current_process != process_it){
+					
+					pcb_s* tmp;
+
+					if(process_it->next == process_it){
+						queue_fixed_priority[i]->first = NULL;
+						process_it->previous = NULL;
+
+						phyAlloc_free((void*)process_it->ctx->sp, process_it->stack_size);
+		 				phyAlloc_free(process_it->ctx, sizeof(ctx_s));
+		 				phyAlloc_free(process_it, sizeof(pcb_s));
+
+		 				break;
+					}
+					else {
+						if(queue_fixed_priority[i]->first == process_it){
+		 					queue_fixed_priority[i]->first = process_it->next;
+		 				}
+		 				else if(queue_fixed_priority[i]->last == process_it){
+		 					queue_fixed_priority[i]->last = process_it->previous;
+		 				}
+		 				process_it->previous->next = process_it->next;
+		 				process_it->next->previous = process_it->previous;
+
+		 				tmp = process_it->previous;
+
+		 				phyAlloc_free((void*)process_it->ctx->sp, process_it->stack_size);
+		 				phyAlloc_free(process_it->ctx, sizeof(ctx_s));
+		 				phyAlloc_free(process_it, sizeof(pcb_s));
+
+	 					process_it = tmp;
+	 				}
+				}
+				if(process_it != NULL){
+					process_it = process_it->next;
+				}
+			}while(process_it != queue_fixed_priority[i]->first);
+		}
 	}
+
+	// int i = 0;
+	// for(i; i<PRIORITY_NUM; ++i){
+	// 	pcb_s* process = queue_fixed_priority[i]->first;
+	// 	if(process != NULL){
+	// 		if(process->next == process){
+	// 			queue_fixed_priority[i]->first = NULL;
+	// 		}
+	// 		do{
+	// 			if(process->state == TERMINATED && process != current_process){
+	// 				pcb_s* tmp_process = process->next;
+
+	// 				if(queue_fixed_priority[i]->first == process){
+	// 					queue_fixed_priority[i]->first = process->next;
+	// 				}
+	// 				else if(queue_fixed_priority[i]->last == process){
+	// 					queue_fixed_priority[i]->last = process->previous;
+	// 				}
+	// 				process->previous->next = process->next;
+	// 				process->next->previous = process->previous;
+
+	// 				phyAlloc_free((void*)process->ctx->sp, process->stack_size);
+	// 				phyAlloc_free(process->ctx, sizeof(ctx_s));
+	// 				phyAlloc_free(process, sizeof(pcb_s));
+
+	// 				process = tmp_process;
+	// 			}else{
+	// 				process = process->next;
+	// 			}
+	// 		}while(process != queue_fixed_priority[i]->first);
+	// 	}
+	// }
 }
 
 pcb_s* sched_fixed_priority(){
 
 	cleanTerminated();
 
-	// TODO : handle state
 	int i = PRIORITY_NUM-1;
-	int j = current_process->priority;
-	for(i; i>j; --i){
+	for(i; i>=0; --i){
 		if(queue_fixed_priority[i]->first != NULL){
+			if(i == current_process->priority && current_process != IDLE){
+				if(current_process == current_process->next && current_process->state == TERMINATED){
+					continue;
+				}
+				return current_process->next;
+			}
 			return queue_fixed_priority[i]->first;
 		}
 	}
-	pcb_s* old = current_process;
-	current_process = current_process->next;
-	while(current_process->state == TERMINATED && current_process != old) {
-		current_process = current_process->next;
-	}
+	return IDLE;
 
-	if(current_process == old && current_process->state == TERMINATED) {
-		for(i = i - 1; i >= 0; --i) {
-			if(queue_fixed_priority[i]->first != NULL){
-				return queue_fixed_priority[i]->first;
-			}
-		}
-		// return IDLE
-	}
-	return current_process;
+	// // TODO : handle state
+	// int i = PRIORITY_NUM-1;
+	// int j = current_process->priority;
+	// pcb_s* first;
+	// pcb_s* current;
+	// for(i; i>j; --i){
+	// 	if(queue_fixed_priority[i]->first != NULL){
+	// 		first = queue_fixed_priority[i]->first;
+	// 		current = first;
+	// 		while(current->state == TERMINATED){
+	// 			current = current->next;
+	// 			if(current == first) break;
+	// 		}
+	// 		if(current->state != TERMINATED){
+	// 			return current;
+	// 		}
+	// 	}
+	// }
+	// pcb_s* old = current_process;
+	// current = current_process->next;
+	// while(current->state == TERMINATED && current != old) {
+	// 	current = current->next;
+	// }
+
+	// if(current == old && current->state == TERMINATED) {
+	// 	for(i = i - 1; i >= 0; --i) {
+	// 		if(queue_fixed_priority[i]->first != NULL){
+	// 			first = queue_fixed_priority[i]->first;
+	// 			current = first;
+	// 			while(current->state == TERMINATED){
+	// 				current = current->next;
+	// 				if(current == first) break;
+	// 			}
+	// 			if(current->state != TERMINATED){
+	// 				return current;
+	// 			}
+	// 		}
+	// 	}
+	// 	return IDLE;
+	// }
+	// return current;
 }
 
 void start_sched(){
-	current_process=queue_round_robin->first;
+	current_process=IDLE;
 	ENABLE_IRQ();
 	set_tick_and_enable_timer();
 }

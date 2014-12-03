@@ -22,7 +22,7 @@ typedef struct pcb_s pcb_s;
 struct pcb_s {
 	State state;
 	func_t function;
-	void* functionArgs; 
+	void* functionArgs;
 	ctx_s* ctx;
 	unsigned int stack_size;
 	pcb_s* next;
@@ -33,6 +33,8 @@ struct pcb_s {
 typedef pcb_s* (*sched_func) ();
 
 pcb_s* current_process;
+
+pcb_s* IDLE;
 
 typedef struct queue queue;
 struct queue {
