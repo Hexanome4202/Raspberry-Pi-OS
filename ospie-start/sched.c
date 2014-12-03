@@ -15,7 +15,8 @@ void init_sched(){
 
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 
-	scheduler_function = sched_fixed_priority;
+	scheduler_function = sched_round_robin;
+	//scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
@@ -81,7 +82,6 @@ void start_current_process(){
 	current_process->function(current_process->functionArgs);
 	
 	current_process->state = TERMINATED;
-	//FIXME : crap -> can be interrupted
 	ctx_switch();
 }
 
@@ -94,27 +94,41 @@ pcb_s* scheduler(){
 }
 
 pcb_s* sched_round_robin(){
-	//TODO : only choose a READY proccess 
-	// if no processes found -> run IDLE process (has to be created at init)
+	pcb_s* current = queue_round_robin->first;
+	pcb_s* tmp;
+	if(current->next != current) {
+		do {
+			if(current->state == TERMINATED && current != current_process) {
+				if(queue_round_robin->first == current){
+					queue_round_robin->first = current->next;
+	 			}
+	 			else if(queue_round_robin->last == current){
+	 				queue_round_robin->last = current->previous;
+	 			}
+	 			current->previous->next = current->next;
+	 			current->next->previous = current->previous;
+	 			tmp = current->previous;
 
-	current_process = current_process->next;
+	 			phyAlloc_free((void*)current->ctx->sp, current->stack_size);
+	 			phyAlloc_free(current->ctx, sizeof(ctx_s));
+	 			phyAlloc_free(current, sizeof(pcb_s));
 
-	//terminaison
-	//TODO : add IDLE process when every process is terminated
-	while(current_process->state == TERMINATED){
-		pcb_s* tmp_process = current_process->next;
-
-		//TODO : first and last of queue need to be updated
-		current_process->previous->next = current_process->next;
-		current_process->next->previous = current_process->previous;
-
-		phyAlloc_free((void*)current_process->ctx->sp, current_process->stack_size);
-		phyAlloc_free(current_process->ctx, sizeof(ctx_s));
-		phyAlloc_free(current_process, sizeof(pcb_s));
-	
-		current_process = tmp_process;
+	 			current = tmp;
+			}
+			current = current->next;
+		} while(current != queue_round_robin->first);
+		if(current_process == IDLE){
+			return current;
+		}else{
+			return current_process->next;
+		}
+	} else {
+		if(current->state == TERMINATED){
+			return IDLE;
+		}else{
+			return current;
+		}
 	}
-	return current_process;
 }
 
 void cleanTerminated(){
@@ -163,38 +177,6 @@ void cleanTerminated(){
 			}while(process_it != queue_fixed_priority[i]->first);
 		}
 	}
-
-	// int i = 0;
-	// for(i; i<PRIORITY_NUM; ++i){
-	// 	pcb_s* process = queue_fixed_priority[i]->first;
-	// 	if(process != NULL){
-	// 		if(process->next == process){
-	// 			queue_fixed_priority[i]->first = NULL;
-	// 		}
-	// 		do{
-	// 			if(process->state == TERMINATED && process != current_process){
-	// 				pcb_s* tmp_process = process->next;
-
-	// 				if(queue_fixed_priority[i]->first == process){
-	// 					queue_fixed_priority[i]->first = process->next;
-	// 				}
-	// 				else if(queue_fixed_priority[i]->last == process){
-	// 					queue_fixed_priority[i]->last = process->previous;
-	// 				}
-	// 				process->previous->next = process->next;
-	// 				process->next->previous = process->previous;
-
-	// 				phyAlloc_free((void*)process->ctx->sp, process->stack_size);
-	// 				phyAlloc_free(process->ctx, sizeof(ctx_s));
-	// 				phyAlloc_free(process, sizeof(pcb_s));
-
-	// 				process = tmp_process;
-	// 			}else{
-	// 				process = process->next;
-	// 			}
-	// 		}while(process != queue_fixed_priority[i]->first);
-	// 	}
-	// }
 }
 
 pcb_s* sched_fixed_priority(){
@@ -214,48 +196,6 @@ pcb_s* sched_fixed_priority(){
 		}
 	}
 	return IDLE;
-
-	// // TODO : handle state
-	// int i = PRIORITY_NUM-1;
-	// int j = current_process->priority;
-	// pcb_s* first;
-	// pcb_s* current;
-	// for(i; i>j; --i){
-	// 	if(queue_fixed_priority[i]->first != NULL){
-	// 		first = queue_fixed_priority[i]->first;
-	// 		current = first;
-	// 		while(current->state == TERMINATED){
-	// 			current = current->next;
-	// 			if(current == first) break;
-	// 		}
-	// 		if(current->state != TERMINATED){
-	// 			return current;
-	// 		}
-	// 	}
-	// }
-	// pcb_s* old = current_process;
-	// current = current_process->next;
-	// while(current->state == TERMINATED && current != old) {
-	// 	current = current->next;
-	// }
-
-	// if(current == old && current->state == TERMINATED) {
-	// 	for(i = i - 1; i >= 0; --i) {
-	// 		if(queue_fixed_priority[i]->first != NULL){
-	// 			first = queue_fixed_priority[i]->first;
-	// 			current = first;
-	// 			while(current->state == TERMINATED){
-	// 				current = current->next;
-	// 				if(current == first) break;
-	// 			}
-	// 			if(current->state != TERMINATED){
-	// 				return current;
-	// 			}
-	// 		}
-	// 	}
-	// 	return IDLE;
-	// }
-	// return current;
 }
 
 void start_sched(){
@@ -298,6 +238,8 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 
 void __attribute__ ((naked)) ctx_switch(){
 
+	DISABLE_IRQ();
+
 	//1. sauvegarde le contexte du processus en cours d’exécution
 	__asm("push {r0-r12}");	
 	
@@ -315,6 +257,9 @@ void __attribute__ ((naked)) ctx_switch(){
 
 	__asm("pop {r0-r12}");
 	
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();
+
 	__asm("bx lr");
 	
 }
