@@ -15,15 +15,15 @@ void init_sched(){
 
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 
-	scheduler_function = sched_round_robin;
-	//scheduler_function = sched_fixed_priority;
+	//scheduler_function = sched_round_robin;
+	scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
 	}
 	else if(scheduler_function == sched_fixed_priority){
-		int i=0;
-		for(i; i<PRIORITY_NUM; ++i){
+		int i;
+		for(i=0; i<PRIORITY_NUM; ++i){
 			queue_fixed_priority[i] = phyAlloc_alloc(sizeof(queue));
 			queue_fixed_priority[i]->first = NULL;
 		}
@@ -133,8 +133,8 @@ pcb_s* sched_round_robin(){
 
 void cleanTerminated(){
 
-	int i = 0;
-	for(i; i<PRIORITY_NUM; ++i){
+	int i;
+	for(i = 0; i<PRIORITY_NUM; ++i){
 		pcb_s* process_it = queue_fixed_priority[i]->first;
 		if(process_it != NULL){
 			do{
@@ -183,8 +183,8 @@ pcb_s* sched_fixed_priority(){
 
 	cleanTerminated();
 
-	int i = PRIORITY_NUM-1;
-	for(i; i>=0; --i){
+	int i;
+	for(i= PRIORITY_NUM-1; i>=0; --i){
 		if(queue_fixed_priority[i]->first != NULL){
 			if(i == current_process->priority && current_process != IDLE){
 				if(current_process == current_process->next && current_process->state == TERMINATED){
