@@ -1,4 +1,5 @@
 #include "sched.h"
+#include "vmem.h"
 void funcA()
 {
 	int cptA = 0;
@@ -22,7 +23,8 @@ int kmain ( void )
 	init_hw();
 	init_sched();
 	create_process(funcB, NULL, STACK_SIZE);
-	create_process(funcA, NULL, STACK_SIZE);
+	//create_process(funcA, NULL, STACK_SIZE);
+	create_process(init_kern_translation_table, NULL, STACK_SIZE);
 	start_sched();
 	//ctx_switch();
 	
