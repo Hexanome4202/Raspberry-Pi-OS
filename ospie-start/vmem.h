@@ -16,8 +16,8 @@
 
 #define TOTAL_TT_SIZE 1052672
 
+#define ADDR_TAB_LVL_1 0x48000
 
-
-
+unsigned int init_kern_translation_table();
 
 #endif

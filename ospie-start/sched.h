@@ -71,6 +71,8 @@ pcb_s* sched_round_robin();
 
 pcb_s* sched_fixed_priority();
 
+void __attribute__ ((naked)) ctx_switch_from_wait();
+
 void start_sched();
 
 void __attribute__ ((naked)) ctx_switch_from_irq();
