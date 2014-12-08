@@ -2,6 +2,7 @@
 void funcA()
 {
 	int cptA = 0;
+	sys_wait(3);
 	while ( 1 ) {
 		cptA ++;
 		//ctx_switch();
