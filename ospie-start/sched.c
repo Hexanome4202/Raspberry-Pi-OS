@@ -89,26 +89,12 @@ void start_current_process(){
 }
 
 void elect(){
-
-	while(current_process->state==WAITING){
-		
-		if(current_process->sleepingTime>0){
-			(current_process->sleepingTime)--;
-		}else{
-			current_process->state=READY;
-		}
-		if(current_process->next->state==WAITING){
-			current_process = current_process->next;
-		}
-	}
-
-	if(current_process->next->state==READY){
-			current_process->next->state=RUNNING;
-	}
-
+	//Selection of a new process to run
 	current_process = scheduler();
-	
-	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepingTime
+
+	if(current_process->state==READY){
+		current_process->state=RUNNING;
+	}
 }
 
 pcb_s* scheduler(){
@@ -118,7 +104,9 @@ pcb_s* scheduler(){
 pcb_s* sched_round_robin(){
 	pcb_s* current = queue_round_robin->first;
 	pcb_s* tmp;
+	//if process not alone
 	if(current->next != current) {
+		//Suppressing all terminated process that are not the current one		
 		do {
 			if(current->state == TERMINATED && current != current_process) {
 				if(queue_round_robin->first == current){
@@ -137,6 +125,14 @@ pcb_s* sched_round_robin(){
 
 	 			current = tmp;
 			}
+			//Handling waiting processes
+			else if(current->state == WAITING){
+				if(current->sleepingTime>0){
+					(current->sleepingTime)--;
+				}else{
+					current->state=READY;
+				}				
+			}
 			current = current->next;
 		} while(current != queue_round_robin->first);
 		if(current_process == IDLE){
@@ -144,8 +140,10 @@ pcb_s* sched_round_robin(){
 		}else{
 			return current_process->next;
 		}
+	//if process is alone
 	} else {
-		if(current->state == TERMINATED){
+		// if process can't be run
+		if(current->state == TERMINATED || current->state == WAITING){
 			return IDLE;
 		}else{
 			return current;
@@ -153,13 +151,18 @@ pcb_s* sched_round_robin(){
 	}
 }
 
+/*Function that suppresses all the terminated processes for the priority scheduler
+*/
 void cleanTerminated(){
 
 	int i;
+	//for each queues
 	for(i = 0; i<PRIORITY_NUM; ++i){
 		pcb_s* process_it = queue_fixed_priority[i]->first;
+		//if queue not empty
 		if(process_it != NULL){
 			do{
+				//Suppressing all terminated process that are not the current one
 				if(process_it->state == TERMINATED && current_process != process_it){
 					
 					pcb_s* tmp;
@@ -193,6 +196,15 @@ void cleanTerminated(){
 	 					process_it = tmp;
 	 				}
 				}
+				//Handling waiting processes
+				else if(process_it->state == WAITING){
+					if(process_it->sleepingTime>0){
+						(process_it->sleepingTime)--;
+					}else{
+						process_it->state=READY;
+					}								
+				}
+
 				if(process_it != NULL){
 					process_it = process_it->next;
 				}
@@ -206,17 +218,37 @@ pcb_s* sched_fixed_priority(){
 	cleanTerminated();
 
 	int i;
+	//for each queue starting from the HIGHEST priority one
 	for(i= PRIORITY_NUM-1; i>=0; --i){
+		//if queue is not empty
 		if(queue_fixed_priority[i]->first != NULL){
-			if(i == current_process->priority && current_process != IDLE){
-				if(current_process == current_process->next && current_process->state == TERMINATED){
+
+			pcb_s* it = queue_fixed_priority[i]->first;
+
+			pcb_s* first = it;
+
+			//if it's the current process' queue (and it's not the idle process)
+			if(current_process != IDLE && i == current_process->priority){
+				// if the current process is alone and can't be run
+				if(current_process == current_process->next && (current_process->state == TERMINATED || current_process->state == WAITING)){
 					continue;
 				}
-				return current_process->next;
+				//we start from the current process
+				else{
+					first = current_process;
+					it = current_process->next;
+				}
 			}
-			return queue_fixed_priority[i]->first;
+			//we check the whole queue and return the first process that can be run
+			do{
+				if(it->state != TERMINATED && it->state != WAITING){
+					return it;					
+				}
+				it = it->next;
+			}while(it != first);			
 		}
 	}
+	//if no runnable process can be found -> we return IDLE
 	return IDLE;
 }
 
@@ -284,8 +316,12 @@ void __attribute__ ((naked)) ctx_switch(){
 	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();
 
-	__asm("bx lr");
-	
+	if(current_process->state == NEW){
+		start_current_process();	
+	}
+	else{
+		__asm("bx lr");
+	}
 }
 
 
