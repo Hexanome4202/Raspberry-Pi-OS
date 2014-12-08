@@ -1,6 +1,7 @@
 #include "sched.h"
 #include "phyAlloc.h"
 #include "hw.h"
+#include "syscall.h"
 
 
 void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
@@ -61,19 +62,25 @@ void start_current_process(){
 
 void elect(){
 
-	if(current_process->state==WAITING){
+	while(current_process->state==WAITING){
 		
 		if(current_process->sleepingTime>0){
 			(current_process->sleepingTime)--;
 		}else{
 			current_process->state=READY;
 		}
-
+		if(current_process->next->state==WAITING){
+			current_process = current_process->next;
+		}
 	}
-	
+
+	if(current_process->next->state==READY){
+			current_process->next->state==RUNNING;
+	}
+
 	current_process = scheduler();
-		
-	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepngTime
+	
+	
 
 	//terminaison
 	while(current_process->state == TERMINATED){
@@ -118,7 +125,9 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 	__asm("cps #0x13");
 
 	__asm("push {r0-r12}");
-	if(current_process->state == RUNNING){
+	
+
+	if(current_process->state != NEW){ //Comprendre pourquoi apres le cours tres complexe
 		__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
 		__asm("mov %0, lr" : "=r"(current_process->ctx->lr));
 	}
@@ -162,4 +171,44 @@ void __attribute__ ((naked)) ctx_switch(){
 	
 	__asm("bx lr");
 	
+}
+
+
+void __attribute__ ((naked)) ctx_switch_from_wait(){
+	
+	DISABLE_IRQ();
+	
+	//unsigned int nbQuantums;
+	__asm("mov %0, r1" : "=r"(nbQuantums));
+	
+	//current_process->state = WAITING;
+	//current_process->sleepingTime = nbQuantums;	
+	
+
+	__asm("sub lr, lr, #4");
+	__asm("srsdb sp!, #0x13");
+
+	__asm("push {r0-r12}");
+	
+	if(current_process->state == WAITING){
+		__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
+		__asm("mov %0, lr" : "=r"(current_process->ctx->lr));
+	}
+
+	//2. demande au scheduler d’élire un nouveau processus
+	elect();
+
+	//3. restaure le contexte du processus élu
+	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
+	__asm("mov lr, %0" : : "r"(current_process->ctx->lr));
+
+	__asm("pop {r0-r12}");
+
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();	
+	
+	if(current_process->state == NEW){
+		start_current_process();	
+	}
+	__asm("rfeia sp!");	
 }
