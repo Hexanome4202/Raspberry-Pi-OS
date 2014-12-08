@@ -103,26 +103,12 @@ void elect(){
 	}
 
 	if(current_process->next->state==READY){
-			current_process->next->state==RUNNING;
+			current_process->next->state=RUNNING;
 	}
 
 	current_process = scheduler();
 	
-	
-
-	//terminaison
-	while(current_process->state == TERMINATED){
-		pcb_s* tmp_process = current_process->next;
-
-		current_process->previous->next = current_process->next;
-		current_process->next->previous = current_process->previous;
-
-		phyAlloc_free((void*)current_process->ctx->sp, current_process->stack_size);
-		phyAlloc_free(current_process->ctx, sizeof(ctx_s));
-		phyAlloc_free(current_process, sizeof(pcb_s));
-	}
-	
-	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepngTime
+	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepingTime
 }
 
 pcb_s* scheduler(){
