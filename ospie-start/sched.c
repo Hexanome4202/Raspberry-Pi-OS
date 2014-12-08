@@ -28,6 +28,8 @@ void init_sched(){
 			queue_fixed_priority[i]->first = NULL;
 		}
 	}
+
+	current_process = IDLE;
 }
 
 void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priority priority){
@@ -57,7 +59,7 @@ void create_process(func_t f, void* args, unsigned int stack_size, Priority prio
 	else if(scheduler_function == sched_fixed_priority){
 		add_pcb(queue_fixed_priority[priority], pcb);
 	}
-	set_tick_and_enable_timer();
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();
 }
 
@@ -214,7 +216,7 @@ pcb_s* sched_fixed_priority(){
 void start_sched(){
 	current_process=IDLE;
 	ENABLE_IRQ();
-	set_tick_and_enable_timer();
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 }
 
 void __attribute__ ((naked)) ctx_switch_from_irq(){
@@ -240,7 +242,7 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 
 	__asm("pop {r0-r12}");
 
-	set_tick_and_enable_timer();
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();	
 	
 	if(current_process->state == NEW){
@@ -270,7 +272,7 @@ void __attribute__ ((naked)) ctx_switch(){
 
 	__asm("pop {r0-r12}");
 	
-	set_tick_and_enable_timer();
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();
 
 	__asm("bx lr");
