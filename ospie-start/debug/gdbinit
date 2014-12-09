@@ -6,5 +6,4 @@ b kmain
 b ctx_switch_from_irq
 b kernel.c:4
 b SWIHandler
-b ctx_switch
 source include.gdb

@@ -3,42 +3,23 @@
 #include "hw.h"
 #include "syscall.h"
 
-void funct_idle(){
-	while(1);
-}
 
 void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
         ctx->sp = (unsigned int)phyAlloc_alloc(stack_size) + stack_size - 14*4;
         ctx->lr = (unsigned int) start_current_process;
 }
 
+
 void init_sched(){
-
-	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
-
-	//scheduler_function = sched_round_robin;
-	scheduler_function = sched_fixed_priority;
-
-	if(scheduler_function == sched_round_robin){
-		queue_round_robin->first = NULL;
-	}
-	else if(scheduler_function == sched_fixed_priority){
-		int i;
-		for(i=0; i<PRIORITY_NUM; ++i){
-			queue_fixed_priority[i] = phyAlloc_alloc(sizeof(queue));
-			queue_fixed_priority[i]->first = NULL;
-		}
-	}
-
-	current_process = IDLE;
+	scheduler_function = sched_round_robin;
+	queue_round_robin->first = NULL;
 }
 
-void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priority priority){
+void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize){
 	
 	aPCB->state = NEW;
 	aPCB->function = f;
 	aPCB->functionArgs = args;
-	aPCB->priority = priority;
 
 	ctx_s* ctx = phyAlloc_alloc(sizeof(ctx_s));
 	init_ctx(ctx, stackSize);
@@ -47,37 +28,28 @@ void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priorit
 	aPCB->stack_size = stackSize;
 }
 
-void create_process(func_t f, void* args, unsigned int stack_size, Priority priority){
+void create_process(func_t f, void* args, unsigned int stack_size){
 	DISABLE_IRQ();
 
 	pcb_s* pcb = phyAlloc_alloc(sizeof(pcb_s));
 
-	init_pcb(pcb, f, args, stack_size, priority);
+	init_pcb(pcb, f, args, stack_size);
 
-	if(scheduler_function == sched_round_robin){
-		add_pcb(queue_round_robin,pcb);
-	}
-	else if(scheduler_function == sched_fixed_priority){
-		add_pcb(queue_fixed_priority[priority], pcb);
-	}
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
-	ENABLE_IRQ();
-}
-
-void add_pcb(queue* queue, pcb_s* pcb){
-	if (queue->first == NULL){
-		queue->first = pcb;
-		queue->last = pcb;
+	if (queue_round_robin->first == NULL){
+		queue_round_robin->first = pcb;
+		queue_round_robin->last = pcb;
 		pcb->next=pcb;
 		pcb->previous=pcb;
 	}
 	else{
-		pcb->previous=queue->last;
-		queue->last->next = pcb;
-		queue->last = pcb;
-		queue->last->next = queue->first;
-		queue->first->previous= queue->last;
+		pcb->previous=queue_round_robin->last;
+		queue_round_robin->last->next = pcb;
+		queue_round_robin->last = pcb;
+		queue_round_robin->last->next = queue_round_robin->first;
+		queue_round_robin->first->previous= queue_round_robin->last;
 	}
+	set_tick_and_enable_timer();
+	ENABLE_IRQ();
 }
 
 void start_current_process(){
@@ -89,11 +61,39 @@ void start_current_process(){
 }
 
 void elect(){
-	//Selection of a new process to run
-	current_process = scheduler();
 
-	if(current_process->state==READY){
-		current_process->state=RUNNING;
+	while(current_process->state==WAITING){
+		
+		if(current_process->sleepingTime>0){
+			(current_process->sleepingTime)--;
+		}else{
+			current_process->state=READY;
+		}
+		if(current_process->next->state==WAITING){
+			current_process = current_process->next;
+		}
+	}
+
+	if(current_process->next->state==READY){
+			current_process->next->state==RUNNING;
+	}
+
+	current_process = scheduler();
+	
+	
+
+	//terminaison
+	while(current_process->state == TERMINATED){
+		pcb_s* tmp_process = current_process->next;
+
+		current_process->previous->next = current_process->next;
+		current_process->next->previous = current_process->previous;
+
+		phyAlloc_free((void*)current_process->ctx->sp, current_process->stack_size);
+		phyAlloc_free(current_process->ctx, sizeof(ctx_s));
+		phyAlloc_free(current_process, sizeof(pcb_s));
+	
+		current_process = tmp_process;
 	}
 }
 
@@ -102,160 +102,18 @@ pcb_s* scheduler(){
 }
 
 pcb_s* sched_round_robin(){
-	pcb_s* current = queue_round_robin->first;
-	pcb_s* tmp;
-	//if process not alone
-	if(current->next != current) {
-		//Suppressing all terminated process that are not the current one		
-		do {
-			if(current->state == TERMINATED && current != current_process) {
-				if(queue_round_robin->first == current){
-					queue_round_robin->first = current->next;
-	 			}
-	 			else if(queue_round_robin->last == current){
-	 				queue_round_robin->last = current->previous;
-	 			}
-	 			current->previous->next = current->next;
-	 			current->next->previous = current->previous;
-	 			tmp = current->previous;
-
-	 			phyAlloc_free((void*)current->ctx->sp, current->stack_size);
-	 			phyAlloc_free(current->ctx, sizeof(ctx_s));
-	 			phyAlloc_free(current, sizeof(pcb_s));
-
-	 			current = tmp;
-			}
-			//Handling waiting processes
-			else if(current->state == WAITING){
-				if(current->sleepingTime>0){
-					(current->sleepingTime)--;
-				}else{
-					current->state=READY;
-				}				
-			}
-			current = current->next;
-		} while(current != queue_round_robin->first);
-		if(current_process == IDLE){
-			return current;
-		}else{
-			return current_process->next;
-		}
-	//if process is alone
-	} else {
-		// if process can't be run
-		if(current->state == TERMINATED || current->state == WAITING){
-			return IDLE;
-		}else{
-			return current;
-		}
-	}
-}
-
-/*Function that suppresses all the terminated processes for the priority scheduler
-*/
-void cleanTerminated(){
-
-	int i;
-	//for each queues
-	for(i = 0; i<PRIORITY_NUM; ++i){
-		pcb_s* process_it = queue_fixed_priority[i]->first;
-		//if queue not empty
-		if(process_it != NULL){
-			do{
-				//Suppressing all terminated process that are not the current one
-				if(process_it->state == TERMINATED && current_process != process_it){
-					
-					pcb_s* tmp;
-
-					if(process_it->next == process_it){
-						queue_fixed_priority[i]->first = NULL;
-						process_it->previous = NULL;
-
-						phyAlloc_free((void*)process_it->ctx->sp, process_it->stack_size);
-		 				phyAlloc_free(process_it->ctx, sizeof(ctx_s));
-		 				phyAlloc_free(process_it, sizeof(pcb_s));
-
-		 				break;
-					}
-					else {
-						if(queue_fixed_priority[i]->first == process_it){
-		 					queue_fixed_priority[i]->first = process_it->next;
-		 				}
-		 				else if(queue_fixed_priority[i]->last == process_it){
-		 					queue_fixed_priority[i]->last = process_it->previous;
-		 				}
-		 				process_it->previous->next = process_it->next;
-		 				process_it->next->previous = process_it->previous;
-
-		 				tmp = process_it->previous;
-
-		 				phyAlloc_free((void*)process_it->ctx->sp, process_it->stack_size);
-		 				phyAlloc_free(process_it->ctx, sizeof(ctx_s));
-		 				phyAlloc_free(process_it, sizeof(pcb_s));
-
-	 					process_it = tmp;
-	 				}
-				}
-				//Handling waiting processes
-				else if(process_it->state == WAITING){
-					if(process_it->sleepingTime>0){
-						(process_it->sleepingTime)--;
-					}else{
-						process_it->state=READY;
-					}								
-				}
-
-				if(process_it != NULL){
-					process_it = process_it->next;
-				}
-			}while(process_it != queue_fixed_priority[i]->first);
-		}
-	}
+	return current_process->next;
 }
 
 pcb_s* sched_fixed_priority(){
 
-	cleanTerminated();
-
-	int i;
-	//for each queue starting from the HIGHEST priority one
-	for(i= PRIORITY_NUM-1; i>=0; --i){
-		//if queue is not empty
-		if(queue_fixed_priority[i]->first != NULL){
-
-			pcb_s* it = queue_fixed_priority[i]->first;
-
-			pcb_s* first = it;
-
-			//if it's the current process' queue (and it's not the idle process)
-			if(current_process != IDLE && i == current_process->priority){
-				// if the current process is alone and can't be run
-				if(current_process == current_process->next && (current_process->state == TERMINATED || current_process->state == WAITING)){
-					continue;
-				}
-				//we start from the current process
-				else{
-					first = current_process;
-					it = current_process->next;
-				}
-			}
-			//we check the whole queue and return the first process that can be run
-			do{
-				if(it->state != TERMINATED && it->state != WAITING){
-					return it;					
-				}
-				it = it->next;
-			}while(it != first);			
-		}
-	}
-	//if no runnable process can be found -> we return IDLE
-	return IDLE;
+	return NULL;
 }
 
 void start_sched(){
-	current_process=IDLE;
+	current_process=queue_round_robin->first;
 	ENABLE_IRQ();
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
+	set_tick_and_enable_timer();
 }
 
 void __attribute__ ((naked)) ctx_switch_from_irq(){
@@ -283,7 +141,7 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 
 	__asm("pop {r0-r12}");
 
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
+	set_tick_and_enable_timer();
 	ENABLE_IRQ();	
 	
 	if(current_process->state == NEW){
@@ -293,8 +151,6 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 }
 
 void __attribute__ ((naked)) ctx_switch(){
-
-	DISABLE_IRQ();
 
 	//1. sauvegarde le contexte du processus en cours d’exécution
 	__asm("push {r0-r12}");	
@@ -313,15 +169,8 @@ void __attribute__ ((naked)) ctx_switch(){
 
 	__asm("pop {r0-r12}");
 	
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
-	ENABLE_IRQ();
-
-	if(current_process->state == NEW){
-		start_current_process();	
-	}
-	else{
-		__asm("bx lr");
-	}
+	__asm("bx lr");
+	
 }
 
 
