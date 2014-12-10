@@ -36,6 +36,19 @@ set_tick_and_enable_timer()
 
 
 /*
+* Set the timer to be interrupted every "time" milliseconds
+*/
+void
+set_tick_and_enable_timer_with_time(unsigned int time)
+{
+	unsigned int rx = GET32(CLO);
+	time = (time*FREQUENCY)/1000;
+	rx += time;
+	PUT32(C1,rx);
+	ENABLE_TIMER_IRQ();
+}
+
+/*
  * LEDs on/off
  */
 
