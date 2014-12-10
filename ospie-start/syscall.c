@@ -17,7 +17,7 @@ const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
 void sys_reboot(){
 	__asm("mov r0, %0" : : "r"(1) : "r0");
 	__asm("SWI 0" : : : "lr");
-	}
+}
 	
 	
 void __attribute__ ((naked)) SWIHandler(){
@@ -41,7 +41,7 @@ void __attribute__ ((naked)) SWIHandler(){
 	ENABLE_IRQ(); //Enable les interruptions
 	
 	
-	}
+}
 	
 void sys_wait(unsigned int nbQuantums)
 {

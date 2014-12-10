@@ -26,16 +26,18 @@ void funcB()
 
 void funcRed()
 {
-	int i;
-	for(i=0; i<3; i++) {
+	//int i;
+	//for(i=0; i<3; i++) {
+	while(1){
 		drawRed();
 	}
 }
 
 void funcBlue()
 {
-	int i;
-	for(i=0; i<5; i++) {
+	//int i;
+	//for(i=0; i<5; i++) {
+	while(1){
 		drawBlue();
 	}
 }

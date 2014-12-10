@@ -12,6 +12,10 @@ typedef enum {LOW, NORMAL, HIGH, HIGHEST} Priority;
 
 #define PRIORITY_NUM HIGHEST+1
 
+#define INTERRUPT_TIME_CONST 1
+
+ #define INTERRUPT_TIME(priority) ((PRIORITY_NUM-priority+1)*INTERRUPT_TIME_CONST)
+
 typedef struct ctx_s ctx_s;
 struct ctx_s {
 	unsigned int sp;
