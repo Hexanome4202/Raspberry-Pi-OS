@@ -11,12 +11,12 @@ void funct_idle(){
 
 void init_sched(){
 
+
+	IDLE = phyAlloc_alloc(sizeof(pcb_s));
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 	
-	
-
-	//scheduler_function = sched_round_robin;
-	scheduler_function = sched_fixed_priority;
+	scheduler_function = sched_round_robin;
+	//scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
@@ -38,15 +38,15 @@ void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priorit
 	aPCB->priority = priority;
 
 	ctx_s* ctx = phyAlloc_alloc(sizeof(ctx_s));
-	aPCB->stack_base= (unsigned int)phyAlloc_alloc(stackSize) + stackSize - 14*4;
-       // ctx->lr = (unsigned int) start_current_process;
+	aPCB->stack_base= (unsigned int)phyAlloc_alloc(stackSize);
+
 	uint32_t* sp = (uint32_t*) (aPCB->stack_base + stackSize);
 	sp--;
 	*sp = 0x13;
 	sp--;
 	*sp = (uint32_t) &start_current_process;
 	sp -= 14;
-	ctx->sp = *sp;
+	ctx->sp = sp;
 	aPCB->ctx = ctx;
 
 	aPCB->stack_size = stackSize;
@@ -241,6 +241,8 @@ pcb_s* sched_fixed_priority(){
 
 void start_sched(){
 	current_process=IDLE;
+	ENABLE_IRQ();
+	set_tick_and_enable_timer();
 }
 
 void __attribute__ ((naked)) ctx_switch_from_irq(){
@@ -261,12 +263,13 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 	//3. restaure le contexte du processus élu
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
 
-	set_tick_and_enable_timer();
+	
 	
 	__asm("pop {r0-r12, lr}");
+	set_tick_and_enable_timer();
 
 	ENABLE_IRQ();	
-	
+	 
 	__asm("rfeia sp!");	
 }
 
@@ -286,9 +289,10 @@ void __attribute__ ((naked)) ctx_switch(){
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
 	__asm("mov lr, %0" : : "r"(current_process->ctx->lr));
 
+	set_tick_and_enable_timer();
+
 	__asm("pop {r0-r12}");
 	
-	set_tick_and_enable_timer();
 	ENABLE_IRQ();
 
 	__asm("bx lr");

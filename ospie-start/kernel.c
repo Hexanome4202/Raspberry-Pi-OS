@@ -15,7 +15,7 @@ void funcA()
 void funcB()
 {
 	int cptB = 1;
-	sys_wait(3);
+	//sys_wait(3);
 	while ( 1 ) {
 		cptB += 2 ;
 		//ctx_switch();
@@ -26,19 +26,16 @@ void funcB()
 int kmain ( void )
 {
 	init_hw();
-/*
+
 	init_sched();
 	create_process(funcB, NULL, STACK_SIZE, NORMAL);
 	create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 	start_sched();
 
-
-
-*/
 	
-	set_tick_and_enable_timer();
-	__asm volatile ("cpsie i");
+	//set_tick_and_enable_timer();
+	//__asm volatile ("cpsie i");
 	while (1)
 		;
 
