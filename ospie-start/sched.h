@@ -12,10 +12,6 @@ typedef enum {LOW, NORMAL, HIGH, HIGHEST} Priority;
 
 #define PRIORITY_NUM HIGHEST+1
 
-#define INTERRUPT_TIME_CONST 1
-
-#define INTERRUPT_TIME(priority) ((PRIORITY_NUM-priority+1)*INTERRUPT_TIME_CONST)
-
 typedef struct ctx_s ctx_s;
 struct ctx_s {
 	unsigned int sp;
@@ -26,6 +22,7 @@ typedef struct pcb_s pcb_s;
 struct pcb_s {
 	State state;
 	unsigned int sleepingTime;
+	unsigned int stack_base;
 	func_t function;
 	void* functionArgs;
 	ctx_s* ctx;
@@ -51,7 +48,6 @@ queue* queue_round_robin;
 
 queue* queue_fixed_priority[PRIORITY_NUM];
 
-void init_ctx(ctx_s*, unsigned int);
 
 void init_sched();
 

@@ -1,7 +1,10 @@
 #include "sched.h"
 #include "vmem.h"
 #include "fb.h"
+#include "translate.c"
 #include "hw.h"
+#include "syscall.h"
+
 void funcA()
 {
 	int cptA = 0;
@@ -14,6 +17,7 @@ void funcA()
 void funcB()
 {
 	int cptB = 1;
+	//sys_wait(3);
 	while ( 1 ) {
 		cptB += 2 ;
 		//ctx_switch();
@@ -41,6 +45,7 @@ int kmain ( void )
 {
 	init_hw();
 	init_sched();
+
 	//create_process(funcB, NULL, STACK_SIZE, LOW);
 	//create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
@@ -53,11 +58,18 @@ int kmain ( void )
 	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 
 	create_process(led_off,NULL,STACK_SIZE, LOW);
+
 	
+	/** TITOUAN AND JUSTINE WORK
+	init_kern_translation_table();
+	configure_mmu_C();
+	unsigned int pa = translate(0x10022);
+	start_mmu_C();
+	
+	create_process(funcB, NULL, STACK_SIZE,NORMAL);
+	create_process(funcA, NULL, STACK_SIZE,NORMAL);
+	**/
 	start_sched();
-	//ctx_switch();
-	
-	//sys_wait(3);
 
 	while(1) ;
 

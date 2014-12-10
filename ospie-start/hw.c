@@ -15,8 +15,6 @@
 
 #define INTERVAL 0x00080000
 
-#define FREQUENCY 250000000
-
 extern void PUT32 ( unsigned int, unsigned int );
 extern unsigned int GET32 ( unsigned int );
 
@@ -31,20 +29,6 @@ set_tick_and_enable_timer()
 {
   unsigned int rx = GET32(CLO);
   rx += INTERVAL;
-  PUT32(C1,rx);
-
-  ENABLE_TIMER_IRQ();
-}
-
-/*
-* Set the timer to be interrupted every "time" milliseconds
-*/
-void
-set_tick_and_enable_timer_with_time(unsigned int time)
-{
-  unsigned int rx = GET32(CLO);
-  time = (time*FREQUENCY)/1000;
-  rx += time;
   PUT32(C1,rx);
 
   ENABLE_TIMER_IRQ();
