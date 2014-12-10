@@ -45,13 +45,11 @@ unsigned int init_kern_translation_table(){
 			//printf("%032X\n", *(entry_add));
 	}
 
-
-
 	for(i=0; i < FIRST_LVL_TT_COUN; i++){
-			uint32_t j=0;
+		uint32_t j=0;
 		for(j=0; j<SECON_LVL_TT_COUN; j++){
 
-			entry_add=entry_add+4;
+			entry_add +=4;
 			uint32_t phys_add =  i*SECTION_SIZE+j*PAGE_SIZE;
 
 			if( phys_add > 0x20000000 && phys_add< 0x20FFFFFF){
@@ -108,4 +106,46 @@ void configure_mmu_C()
 
 void init_frame_tab(){
 	
+	uint8_t i;
+	for(i=0; i< TAB_FRAME_SIZE; i++){
+		if(i< 50000/4 || i>0x1FFDEFFF){
+			SET32(ADDR_TAB_FRAME_OCC+i, 1);
+		}else{
+			SET32(ADDR_TAB_FRAME_OCC+i, 0);
+		}
+	}
+}
+
+uint8_t* vMem_Alloc(unsigned int nbPages){
+	/*
+	uint8_t secondLevelTtAdd = ADDR_TAB_LVL_1 + 4 * FIRST_LVL_TT_COUN;
+	uint8_t i;
+	int nbFound = 0;
+	uint8_t first = 0;
+
+	for(i=0; i< SECON_LVL_TT_COUN; i++ ){
+		if(*(secondLevelTtAdd+i) == 0){
+			//remplacer par ça probablement
+		//if(GET32(secondLevelTtAdd+))
+			if(nbFound == 0)
+				first = i;
+
+			nbFound++;
+
+			if(nbFound == nbPages){
+				for(; i=> first; i--){
+					//remplir la table de niveau 2 avec une adresse physique libre, trouvée dans la table d'occupation
+					//mettre l'occupation à 1 dans la table d'occupation
+					//*(ADDR_TAB_FRAME_OCC+i) = 1;
+				}
+
+				//return addresse coresponding to first;
+			}
+		}else{
+			first = 0;
+			nbFound = 0;
+		}
+	}
+	*/
+	return 0;
 }

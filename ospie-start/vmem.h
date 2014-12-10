@@ -22,6 +22,10 @@
 
 #define ADDR_TAB_LVL_1 0x48000
 
+#define ADDR_TAB_FRAME_OCC 0x1FFDEFFF
+
+#define TAB_FRAME_SIZE 135168
+
 unsigned int init_kern_translation_table();
 
 void start_mmu_C();
