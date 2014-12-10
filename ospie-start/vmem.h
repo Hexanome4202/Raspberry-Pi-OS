@@ -20,4 +20,12 @@
 
 unsigned int init_kern_translation_table();
 
+void start_mmu_C();
+
+void configure_mmu_C();
+
+void init_frame_tab();
+
+uint8_t* vMem_Alloc(unsigned int nbPages);
+
 #endif

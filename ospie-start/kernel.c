@@ -1,5 +1,7 @@
 #include "sched.h"
 #include "vmem.h"
+#include "translate.c"
+#include "hw.h"
 void funcA()
 {
 	int cptA = 0;
@@ -22,9 +24,17 @@ int kmain ( void )
 {
 	init_hw();
 	init_sched();
-	create_process(funcB, NULL, STACK_SIZE);
-	//create_process(funcA, NULL, STACK_SIZE);
-	create_process(init_kern_translation_table, NULL, STACK_SIZE);
+	
+	init_kern_translation_table();
+	configure_mmu_C();
+	unsigned int pa = translate(0x10022);
+	start_mmu_C();
+
+	
+	
+	create_process(funcB, NULL, STACK_SIZE,NORMAL);
+	
+	create_process(funcA, NULL, STACK_SIZE,NORMAL);
 	start_sched();
 	//ctx_switch();
 	

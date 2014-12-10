@@ -57,6 +57,11 @@ data:	 b data
 unused:	b unused
 fiq:	b fiq
 
+.globl SET32
+SET32:
+    str r1,[r0]
+    mov pc,lr
+    
 .globl PUT32
 PUT32:
     str r1,[r0]
