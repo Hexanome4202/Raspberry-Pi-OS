@@ -1,22 +1,22 @@
 #include "sched.h"
 #include "phyAlloc.h"
 #include "hw.h"
+#include "syscall.h"
+#include <stdint.h>
 
 void funct_idle(){
 	while(1);
 }
 
-void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
-        ctx->sp = (unsigned int)phyAlloc_alloc(stack_size) + stack_size - 14*4;
-        ctx->lr = (unsigned int) start_current_process;
-}
 
 void init_sched(){
 
-	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 
-	//scheduler_function = sched_round_robin;
-	scheduler_function = sched_fixed_priority;
+	IDLE = phyAlloc_alloc(sizeof(pcb_s));
+	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
+	
+	scheduler_function = sched_round_robin;
+	//scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
@@ -38,15 +38,23 @@ void init_pcb(pcb_s* aPCB, func_t f, void* args, unsigned int stackSize, Priorit
 	aPCB->priority = priority;
 
 	ctx_s* ctx = phyAlloc_alloc(sizeof(ctx_s));
-	init_ctx(ctx, stackSize);
+	aPCB->stack_base= (unsigned int)phyAlloc_alloc(stackSize);
+
+	uint32_t* sp = (uint32_t*) (aPCB->stack_base + stackSize);
+	sp--;
+	*sp = 0x13;
+	sp--;
+	*sp = (uint32_t) &start_current_process;
+	sp -= 14;
+	ctx->sp = sp;
 	aPCB->ctx = ctx;
 
 	aPCB->stack_size = stackSize;
 }
 
 void create_process(func_t f, void* args, unsigned int stack_size, Priority priority){
+	
 	DISABLE_IRQ();
-
 	pcb_s* pcb = phyAlloc_alloc(sizeof(pcb_s));
 
 	init_pcb(pcb, f, args, stack_size, priority);
@@ -82,22 +90,42 @@ void start_current_process(){
 	current_process->function(current_process->functionArgs);
 	
 	current_process->state = TERMINATED;
-	ctx_switch();
+	ctx_switch_from_irq();
 }
 
 void elect(){
 
-	if(current_process->state==WAITING){
+	while(current_process->state==WAITING){
 		
 		if(current_process->sleepingTime>0){
 			(current_process->sleepingTime)--;
 		}else{
 			current_process->state=READY;
 		}
-
+		if(current_process->next->state==WAITING){
+			current_process = current_process->next;
+		}
 	}
-	
+
+	if(current_process->next->state==READY){
+			current_process->next->state==RUNNING;
+	}
+
 	current_process = scheduler();
+	
+	
+
+	//terminaison
+	while(current_process->state == TERMINATED){
+		pcb_s* tmp_process = current_process->next;
+
+		current_process->previous->next = current_process->next;
+		current_process->next->previous = current_process->previous;
+
+		phyAlloc_free((void*)current_process->ctx->sp, current_process->stack_size);
+		phyAlloc_free(current_process->ctx, sizeof(ctx_s));
+		phyAlloc_free(current_process, sizeof(pcb_s));
+	}
 	
 	//traiter cas ou le prochain process est waiting.. faire un autre if et passer de nouveau au next et decrementer sleepngTime
 }
@@ -225,27 +253,23 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 	__asm("srsdb sp!, #0x13");
 	__asm("cps #0x13");
 
-	__asm("push {r0-r12}");
-	if(current_process->state == RUNNING){
-		__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
-		__asm("mov %0, lr" : "=r"(current_process->ctx->lr));
-	}
+	__asm("push {r0-r12, lr}");
+	
+	__asm("mov %0, sp" : "=r"(current_process->ctx->sp));
 
 	//2. demande au scheduler d’élire un nouveau processus
 	elect();
 
 	//3. restaure le contexte du processus élu
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
-	__asm("mov lr, %0" : : "r"(current_process->ctx->lr));
 
-	__asm("pop {r0-r12}");
-
-	set_tick_and_enable_timer();
-	ENABLE_IRQ();	
 	
-	if(current_process->state == NEW){
-		start_current_process();	
-	}
+	
+	__asm("pop {r0-r12, lr}");
+	set_tick_and_enable_timer();
+
+	ENABLE_IRQ();	
+	 
 	__asm("rfeia sp!");	
 }
 
@@ -255,11 +279,8 @@ void __attribute__ ((naked)) ctx_switch(){
 
 	//1. sauvegarde le contexte du processus en cours d’exécution
 	__asm("push {r0-r12}");	
-	
-	if(current_process->state == RUNNING){
-		__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
-		__asm("mov %0, lr" : "=r"(current_process->ctx->lr));
-	}
+	__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
+	__asm("mov %0, lr" : "=r"(current_process->ctx->lr));
 
 	//2. demande au scheduler d’élire un nouveau processus
 	elect();
@@ -268,11 +289,27 @@ void __attribute__ ((naked)) ctx_switch(){
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
 	__asm("mov lr, %0" : : "r"(current_process->ctx->lr));
 
+	set_tick_and_enable_timer();
+
 	__asm("pop {r0-r12}");
 	
-	set_tick_and_enable_timer();
 	ENABLE_IRQ();
 
 	__asm("bx lr");
+	
+}
+
+
+void __attribute__ ((naked)) ctx_switch_from_wait(){
+	
+	DISABLE_IRQ();
+	
+	unsigned int nbQuantums;
+	__asm("mov %0, r1" : "=r"(nbQuantums));
+	
+	current_process->state = WAITING;
+	current_process->sleepingTime = nbQuantums;	
+	
+	ctx_switch_from_irq();
 	
 }

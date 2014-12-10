@@ -1,6 +1,10 @@
 #ifndef VMEM_H
 #define VMEM_H
 
+#include <stdio.h>
+#include <stdint.h>
+
+
 #define PAGE_SIZE 4096 //4Ko
 
 //Nombre d'entrées contenues par une table de niveau 2

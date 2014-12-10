@@ -22,6 +22,7 @@ typedef struct pcb_s pcb_s;
 struct pcb_s {
 	State state;
 	unsigned int sleepingTime;
+	unsigned int stack_base;
 	func_t function;
 	void* functionArgs;
 	ctx_s* ctx;
@@ -47,7 +48,6 @@ queue* queue_round_robin;
 
 queue* queue_fixed_priority[PRIORITY_NUM];
 
-void init_ctx(ctx_s*, unsigned int);
 
 void init_sched();
 
@@ -66,6 +66,8 @@ pcb_s* scheduler();
 pcb_s* sched_round_robin();
 
 pcb_s* sched_fixed_priority();
+
+void __attribute__ ((naked)) ctx_switch_from_wait();
 
 void start_sched();
 

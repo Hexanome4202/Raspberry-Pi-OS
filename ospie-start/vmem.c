@@ -3,8 +3,6 @@
 //activer MMU
 //primitives alloc et libération des pages
 #include "vmem.h"
-#include <stdio.h>
-#include <stdint.h>
 
 extern void SET32(unsigned int variable, int valeur);
 
