@@ -13,7 +13,7 @@ void init_ctx(struct ctx_s* ctx, unsigned int stack_size){
 }
 
 void init_sched(){
-
+	IDLE = phyAlloc_alloc(sizeof(pcb_s));
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 
 	//scheduler_function = sched_round_robin;
