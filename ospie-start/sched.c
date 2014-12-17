@@ -13,8 +13,8 @@ void init_sched(){
 	IDLE = phyAlloc_alloc(sizeof(pcb_s));
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 	
-	//scheduler_function = sched_round_robin;
-	scheduler_function = sched_fixed_priority;
+	scheduler_function = sched_round_robin;
+	//scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
@@ -301,14 +301,24 @@ void __attribute__ ((naked)) ctx_switch(){
 
 void __attribute__ ((naked)) ctx_switch_from_wait(){
 	
-	DISABLE_IRQ();
-	
 	unsigned int nbQuantums;
 	__asm("mov %0, r1" : "=r"(nbQuantums));
 	
 	current_process->state = WAITING;
 	current_process->sleepingTime = nbQuantums;	
 	
-	ctx_switch_from_irq();
+	//2. demande au scheduler d’élire un nouveau processus
+	elect();
+
+	//3. restaure le contexte du processus élu
+	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
+
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
+
+	__asm("pop {r0-r12, lr}");
+	
+	ENABLE_IRQ();
+
+	__asm("rfeia sp!");
 	
 }
