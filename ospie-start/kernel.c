@@ -55,7 +55,7 @@ int kmain ( void )
 	FramebufferInitialize();
 	draw();	
 
-	create_process(led_on,NULL,STACK_SIZE, HIGH);
+	//create_process(led_on,NULL,STACK_SIZE, HIGH);
 	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
 	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 

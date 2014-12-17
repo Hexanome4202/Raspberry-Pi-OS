@@ -88,7 +88,7 @@ void start_current_process(){
 	current_process->function(current_process->functionArgs);
 	
 	current_process->state = TERMINATED;
-	ctx_switch_from_irq();
+	ctx_switch();
 }
 
 void elect(){
@@ -263,11 +263,12 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 	elect();
 
 	//3. restaure le contexte du processus élu
-	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
+	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));
+
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 
 	__asm("pop {r0-r12, lr}");
 
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();	
 	 
 	__asm("rfeia sp!");	
@@ -278,6 +279,7 @@ void __attribute__ ((naked)) ctx_switch(){
 	DISABLE_IRQ();
 
 	//1. sauvegarde le contexte du processus en cours d’exécution
+	__asm("srsdb sp!, #0x13");
 	__asm("push {r0-r12, lr}");
 	__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
 
@@ -287,13 +289,13 @@ void __attribute__ ((naked)) ctx_switch(){
 	//3. restaure le contexte du processus élu
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	
 
+	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
+
 	__asm("pop {r0-r12, lr}");
 	
-	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 	ENABLE_IRQ();
 
-	__asm("bx lr");
-	
+	__asm("rfeia sp!");	
 }
 
 
