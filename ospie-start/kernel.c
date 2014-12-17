@@ -68,8 +68,8 @@ int kmain ( void )
 	unsigned int pa = translate(0x10022);
 	start_mmu_C();
 	
-	create_process(funcB, NULL, STACK_SIZE,NORMAL);
-	create_process(funcA, NULL, STACK_SIZE,NORMAL);
+	uint8_t* adresse = vMem_Alloc(5);
+	unsigned int pa1 = translate(adresse);
 	**/
 	start_sched();
 

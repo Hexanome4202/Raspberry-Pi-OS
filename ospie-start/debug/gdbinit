@@ -8,4 +8,6 @@ b kernel.c:8
 b kernel.c:17
 b SWIHandler
 b ctx_switch
+b kernel.c:71
+b vmem.c:138
 source include.gdb

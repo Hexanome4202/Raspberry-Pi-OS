@@ -3,8 +3,10 @@
 //activer MMU
 //primitives alloc et libération des pages
 #include "vmem.h"
+#include "translate.c"
 
 extern void SET32(unsigned int variable, int valeur);
+extern int GET32(unsigned int variable);
 
 
 unsigned int init_kern_translation_table(){
@@ -117,35 +119,72 @@ void init_frame_tab(){
 }
 
 uint8_t* vMem_Alloc(unsigned int nbPages){
-	/*
+
+	uint32_t flags = 
+		  ((0 << 0)
+		| (1 << 1)
+		| (0 << 2)
+		| (0 << 3)
+		| (0b00 << 4)
+		| (0b000 << 6)
+		| (0 << 9)
+		| (0 << 10)
+		| (0 << 11));
+	
 	uint8_t secondLevelTtAdd = ADDR_TAB_LVL_1 + 4 * FIRST_LVL_TT_COUN;
-	uint8_t i;
 	int nbFound = 0;
 	uint8_t first = 0;
 
-	for(i=0; i< SECON_LVL_TT_COUN; i++ ){
-		if(*(secondLevelTtAdd+i) == 0){
-			//remplacer par ça probablement
-		//if(GET32(secondLevelTtAdd+))
+
+	//Parcours des adresses virtuelles
+ 	// 553648127 = 20FFFFFF
+ 	uint8_t i;
+	for(i = 0 ; i < 553648127 ; i+= 4096){
+		if(translate(i) == 0){
 			if(nbFound == 0)
 				first = i;
 
 			nbFound++;
-
-			if(nbFound == nbPages){
-				for(; i=> first; i--){
-					//remplir la table de niveau 2 avec une adresse physique libre, trouvée dans la table d'occupation
-					//mettre l'occupation à 1 dans la table d'occupation
-					//*(ADDR_TAB_FRAME_OCC+i) = 1;
-				}
-
-				//return addresse coresponding to first;
-			}
 		}else{
-			first = 0;
 			nbFound = 0;
 		}
 	}
-	*/
-	return 0;
+
+	//Parcours de la table d'occupation
+	//20FFFFFF/ 4096 =  135 168
+	int j;
+	for(j =0; j< nbPages; j++){
+		uint32_t vir_add = first + 4096*j;
+
+		//i index dans la table d'occupation + adresse de la table d'occupation + l'index de la première adresse utilisable
+		for(i=ADDR_TAB_FRAME_OCC+50000/4; i< 135168+ADDR_TAB_FRAME_OCC; i++ ){
+			if(GET32(i) == 0){
+				uint32_t phys_add = (i-ADDR_TAB_FRAME_OCC)*4096;
+
+				//PASSER TABLE D'OCCUPATION A 1
+				SET32(i ,1);
+
+				uint32_t entry_add = (vir_add >> 12) && (000000000001111111);
+
+				uint32_t entry2 = (phys_add|flags);
+				SET32(entry_add,entry2);
+			}
+		}
+	}
+
+	return (uint8_t*) first;
+
 }
+
+/*
+void vMem_Free(uint8_t* ptr, unsigned int nbPages){
+
+	uint8_t i;
+	for(i=0; i< nbPages; i++){
+		//GET(ptr+i*4) permet d'obtenir l'adresse physique
+		//qu'on divise par 4 pour avoir l'adresse de la table des occupations
+		SET( GET(ptr+i*4)/4, 0 );
+		SET32(ptr+i , 0);
+	}
+}
+*/
