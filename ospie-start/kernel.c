@@ -1,9 +1,10 @@
 #include "sched.h"
 #include "vmem.h"
 #include "fb.h"
-#include "translate.c"
+#include "translate.h"
 #include "hw.h"
 #include "syscall.h"
+#include "gui.h"
 
 void funcA()
 {
@@ -71,7 +72,7 @@ int kmain ( void )
 	//create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 
-	FramebufferInitialize();
+	guiInitialize();
 	draw();
 
 	create_process(ledON,NULL,STACK_SIZE, NORMAL);
@@ -80,16 +81,6 @@ int kmain ( void )
 	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
 
-	
-	/** TITOUAN AND JUSTINE WORK
-	init_kern_translation_table();
-	configure_mmu_C();
-	unsigned int pa = translate(0x10022);
-	start_mmu_C();
-	
-	uint8_t* adresse = vMem_Alloc(5);
-	unsigned int pa1 = translate(adresse);
-	**/
 	start_sched();
 
 	while(1) ;

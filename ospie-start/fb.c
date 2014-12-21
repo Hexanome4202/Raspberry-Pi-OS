@@ -256,3 +256,17 @@ void drawBlue() {
     }
   }
 }
+
+/*
+ * Returns width
+ */
+uint32 getWidth() {
+	return fb_x;
+}
+
+/** 
+ * Returns height
+ */
+uint32 getHeight() {
+	return fb_y;
+}

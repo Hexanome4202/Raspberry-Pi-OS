@@ -56,4 +56,7 @@ void drawRed();
 
 void drawBlue();
 
+uint32 getWidth();
+uint32 getHeight();
+
 #endif

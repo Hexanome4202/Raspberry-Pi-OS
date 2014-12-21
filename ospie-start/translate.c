@@ -1,3 +1,5 @@
+#include "translate.h"
+
 unsigned int
 translate(unsigned int va)
 {

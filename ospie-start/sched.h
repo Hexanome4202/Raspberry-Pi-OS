@@ -1,7 +1,7 @@
 #ifndef SCHED_H
 #define SCHED_H
 
-#define STACK_SIZE 1024
+#define STACK_SIZE 512
 #define NULL 0
 
 typedef void (*func_t) (void*);
