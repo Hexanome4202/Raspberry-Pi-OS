@@ -72,7 +72,8 @@ int kmain ( void )
 	//create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 
-	guiInitialize();
+	//guiInitialize();
+	FramebufferInitialize();
 	draw();
 
 	create_process(ledON,NULL,STACK_SIZE, NORMAL);
