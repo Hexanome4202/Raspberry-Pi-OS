@@ -7,7 +7,7 @@
 #include "gui.h"
 #include "sem.h"
 
-sem_s mutex;
+sem_s sem1, sem2;
 int inccc = 0;
 
 void funcA()
@@ -68,17 +68,17 @@ void ledOFF() {
 
 void prod() {
 	while(1) {
-		sem_down(&mutex);
+		sem_down(&sem1);
 		++inccc;
-		sem_up(&mutex);
+		sem_up(&sem2);
 	}
 }	
 
 void cons() {
 	while(1) {
-		sem_down(&mutex);
+		sem_down(&sem2);
 		--inccc;
-		sem_up(&mutex);
+		sem_up(&sem1);
 	}
 }
 
@@ -96,7 +96,8 @@ int kmain ( void )
 	FramebufferInitialize();
 	draw();
 
-	sem_init(&mutex, 1);
+	sem_init(&sem1, 1);
+	sem_init(&sem2, 0);
 
 	//create_process(ledON,NULL,STACK_SIZE, NORMAL);
 	//create_process(funcRed, NULL, STACK_SIZE, NORMAL);

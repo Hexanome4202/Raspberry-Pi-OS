@@ -5,7 +5,7 @@
 
 typedef void (*func_t) (void*);
 
-typedef enum {NEW, READY, RUNNING, WAITING, TERMINATED} State;
+typedef enum {NEW, READY, RUNNING, WAITING, BLOCKED, TERMINATED} State;
 
 typedef enum {LOW, NORMAL, HIGH, HIGHEST} Priority;
 

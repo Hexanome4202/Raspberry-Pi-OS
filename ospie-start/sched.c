@@ -352,4 +352,5 @@ void add_blocked_process(sem_s* sem) {
 	new_blocked_process->process = current_process;
 	current_blocked->previous = new_blocked_process;
 	new_blocked_process->next = current_blocked;
+	current_blocked->process->state = BLOCKED;
 }
