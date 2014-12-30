@@ -1,6 +1,8 @@
 #include "sem.h"
 #include "hw.h"
 #include "defines.h"
+#include "syscall.h"
+#include "sched.h"
 
 // TODO: change set_tick... to set normal waiting time or something smarter
 
