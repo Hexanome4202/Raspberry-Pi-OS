@@ -97,4 +97,6 @@ struct blocked_process {
 };
 blocked_process* current_blocked;
 
+void add_blocked_proces(sem_s*);
+
 #endif
