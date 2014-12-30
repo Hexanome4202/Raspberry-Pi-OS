@@ -346,8 +346,10 @@ void elect_blocked_process() {
 }
 
 void add_blocked_process(sem_s* sem) {
+	if(sem == NULL) return;
 	blocked_process* new_blocked_process = phyAlloc_alloc(sizeof(blocked_process));
 	new_blocked_process->sem = sem;
 	new_blocked_process->process = current_process;
-	
+	current_blocked->previous = new_blocked_process;
+	new_blocked_process->next = current_blocked;
 }

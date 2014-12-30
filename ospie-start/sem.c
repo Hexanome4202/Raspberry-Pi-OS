@@ -24,7 +24,8 @@ void sem_down(sem_s* sem) {
 	if(sem->counter > 0) {
 		--(sem->counter);
 	} else {
-		// Add one process to the queue
+		add_blocked_process(sem);
+		sys_wait(1); // In order to switch
 	}
 	set_tick_and_enable_timer();
 	ENABLE_IRQ();
