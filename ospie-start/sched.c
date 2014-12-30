@@ -2,6 +2,7 @@
 #include "phyAlloc.h"
 #include "hw.h"
 #include "syscall.h"
+#include "defines.h"
 #include <stdint.h>
 
 void funct_idle(){
@@ -320,5 +321,13 @@ void __attribute__ ((naked)) ctx_switch_from_wait(){
 	ENABLE_IRQ();
 
 	__asm("rfeia sp!");
+	
+}
+
+pcb_s* get_current_process() {
+	return current_process;
+}
+
+void elect_blocked_process() {
 	
 }

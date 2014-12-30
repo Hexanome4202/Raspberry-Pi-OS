@@ -2,7 +2,6 @@
 #define SCHED_H
 
 #define STACK_SIZE 512
-#define NULL 0
 
 typedef void (*func_t) (void*);
 
@@ -14,7 +13,7 @@ typedef enum {LOW, NORMAL, HIGH, HIGHEST} Priority;
 
 #define INTERRUPT_TIME_CONST 1
 
- #define INTERRUPT_TIME(priority) ((PRIORITY_NUM-priority+1)*INTERRUPT_TIME_CONST)
+#define INTERRUPT_TIME(priority) ((PRIORITY_NUM-priority+1)*INTERRUPT_TIME_CONST)
 
 typedef struct ctx_s ctx_s;
 struct ctx_s {
@@ -80,5 +79,13 @@ void __attribute__ ((naked)) ctx_switch_from_irq();
 void __attribute__ ((naked)) ctx_switch();
 
 sched_func scheduler_function;
+
+pcb_s* get_current_process(void);
+
+void elect_blocked_process(void);
+
+// at the end to fix compilation error.
+// FIXME
+#include "sem.h"
 
 #endif

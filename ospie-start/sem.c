@@ -1,11 +1,14 @@
 #include "sem.h"
-#include "sched.h"
 #include "hw.h"
+#include "defines.h"
 
 // TODO: change set_tick... to set normal waiting time or something smarter
 
 void sem_init(sem_s* sem, unsigned int val) {
 	sem->counter = val;
+	sem->process = get_current_process();
+	sem->next = NULL;
+	sem->previous = NULL;
 }
 
 void sem_up(sem_s* sem) {
