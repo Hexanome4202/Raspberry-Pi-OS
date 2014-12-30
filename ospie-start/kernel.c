@@ -5,6 +5,10 @@
 #include "hw.h"
 #include "syscall.h"
 #include "gui.h"
+#include "sem.h"
+
+sem_s mutex;
+int inccc = 0;
 
 void funcA()
 {
@@ -62,6 +66,22 @@ void ledOFF() {
 	}
 }
 
+void prod() {
+	while(1) {
+		sem_down(&mutex);
+		++inccc;
+		sem_up(&mutex);
+	}
+}	
+
+void cons() {
+	while(1) {
+		sem_down(&mutex);
+		--inccc;
+		sem_up(&mutex);
+	}
+}
+
 //------------------------------------------------------------------------
 int kmain ( void )
 {
@@ -76,11 +96,15 @@ int kmain ( void )
 	FramebufferInitialize();
 	draw();
 
-	create_process(ledON,NULL,STACK_SIZE, NORMAL);
-	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
-	create_process(ledOFF,NULL,STACK_SIZE, NORMAL);	
-	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
+	sem_init(&mutex, 1);
+
+	//create_process(ledON,NULL,STACK_SIZE, NORMAL);
+	//create_process(funcRed, NULL, STACK_SIZE, NORMAL);
+	//create_process(ledOFF,NULL,STACK_SIZE, NORMAL);	
+	//create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
+	create_process(prod, NULL, STACK_SIZE, NORMAL);
+	create_process(cons, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 
