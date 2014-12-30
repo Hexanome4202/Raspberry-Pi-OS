@@ -13,6 +13,7 @@ void funct_idle(){
 void init_sched(){
 	IDLE = phyAlloc_alloc(sizeof(pcb_s));
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
+	current_blocked = NULL;
 	
 	scheduler_function = sched_round_robin;
 	//scheduler_function = sched_fixed_priority;
@@ -329,5 +330,15 @@ pcb_s* get_current_process() {
 }
 
 void elect_blocked_process() {
-	
+	if(current_blocked != NULL) {
+		current_blocked->process->state = READY;
+		if(current_blocked->next = current_blocked) {
+			phyAlloc_free(current_blocked, sizeof(blocked_process));
+			current_blocked = NULL;
+		} else {
+			current_blocked->next->previous = current_blocked->previous;
+			current_blocked->previous->next = current_blocked->next;
+			current_blocked = current_blocked->next;
+		}
+	}
 }

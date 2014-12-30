@@ -6,16 +6,13 @@
 
 void sem_init(sem_s* sem, unsigned int val) {
 	sem->counter = val;
-	sem->process = get_current_process();
-	sem->next = NULL;
-	sem->previous = NULL;
 }
 
 void sem_up(sem_s* sem) {
 	DISABLE_IRQ();
 
 	++(sem->counter);
-	// Elect one process in the queue
+	elect_blocked_process();
 
 	set_tick_and_enable_timer();
 	ENABLE_IRQ();

@@ -88,4 +88,13 @@ void elect_blocked_process(void);
 // FIXME
 #include "sem.h"
 
+typedef struct blocked_process blocked_process;
+struct blocked_process {
+	sem_s* sem;
+	pcb_s* process;
+	blocked_process* next;
+	blocked_process* previous;
+};
+blocked_process* current_blocked;
+
 #endif
