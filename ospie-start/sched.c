@@ -339,7 +339,11 @@ void elect_blocked_process() {
 			blocked_process* save = current_blocked;
 			current_blocked->next->previous = current_blocked->previous;
 			current_blocked->previous->next = current_blocked->next;
-			current_blocked = current_blocked->next;
+			if(current_blocked->next == current_blocked) {
+				current_blocked = NULL;
+			} else {
+				current_blocked = current_blocked->next;
+			}
 			phyAlloc_free(save, sizeof(blocked_process));
 		}
 	}
