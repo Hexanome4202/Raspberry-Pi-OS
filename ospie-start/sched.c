@@ -15,8 +15,8 @@ void init_sched(){
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 	current_blocked = NULL;
 	
-	scheduler_function = sched_round_robin;
-	//scheduler_function = sched_fixed_priority;
+	//scheduler_function = sched_round_robin;
+	scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
@@ -221,7 +221,7 @@ pcb_s* sched_fixed_priority(){
 			//if it's the current process' queue (and it's not the idle process)
 			if(current_process != IDLE && i == current_process->priority){
 				// if the current process is alone and can't be run
-				if(current_process == current_process->next && (current_process->state == TERMINATED || current_process->state == WAITING)){
+				if(current_process == current_process->next && (current_process->state == TERMINATED || current_process->state == WAITING || current_process->state == BLOCKED)){
 					continue;
 				}
 				//we start from the current process
@@ -232,7 +232,7 @@ pcb_s* sched_fixed_priority(){
 			}
 			//we check the whole queue and return the first process that can be run
 			do{
-				if(it->state != TERMINATED && it->state != WAITING){
+				if(it->state != TERMINATED && it->state != WAITING && it->state != BLOCKED){
 					return it;
 				}
 				it = it->next;
@@ -350,7 +350,15 @@ void add_blocked_process(sem_s* sem) {
 	blocked_process* new_blocked_process = phyAlloc_alloc(sizeof(blocked_process));
 	new_blocked_process->sem = sem;
 	new_blocked_process->process = current_process;
-	current_blocked->previous = new_blocked_process;
-	new_blocked_process->next = current_blocked;
+	if(current_blocked != NULL) {
+		new_blocked_process->previous = current_blocked->previous;
+		new_blocked_process->previous->next = new_blocked_process;
+		current_blocked->previous = new_blocked_process;
+		new_blocked_process->next = current_blocked;
+	} else {
+		new_blocked_process->next = new_blocked_process;
+		new_blocked_process->previous = new_blocked_process;
+		current_blocked = new_blocked_process;
+	}
 	current_blocked->process->state = BLOCKED;
 }
