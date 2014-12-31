@@ -27,8 +27,8 @@ void sem_down(sem_s* sem) {
 	if(sem->counter < 0) {
 		add_blocked_process(sem);
 		ctx_switch();
+	} else {
+		set_tick_and_enable_timer();
+		ENABLE_IRQ();
 	}
-
-	set_tick_and_enable_timer();
-	ENABLE_IRQ();
 }
