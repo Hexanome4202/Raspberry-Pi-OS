@@ -23,12 +23,12 @@ void sem_up(sem_s* sem) {
 void sem_down(sem_s* sem) {
 	DISABLE_IRQ();
 
-	if(sem->counter > 0) {
-		--(sem->counter);
-	} else {
+	--(sem->counter);
+	if(sem->counter < 0) {
 		add_blocked_process(sem);
-		sys_wait(1); // In order to switch
+		ctx_switch();
+	} else {
+		set_tick_and_enable_timer();
+		ENABLE_IRQ();
 	}
-	set_tick_and_enable_timer();
-	ENABLE_IRQ();
 }
