@@ -100,8 +100,8 @@ int FramebufferInitialize() {
   
   fb_x = mb[5]; // On récupére la largeur en pixel de l'écran
   fb_y = mb[6]; // On récupére la hauteur en pixel de l'écran
-  //fb_x = 100;
-  //fb_y = 100;  
+  //fb_x = 400;
+  //fb_y = 400;  
 
 
   uint32 mb_pos=1;
