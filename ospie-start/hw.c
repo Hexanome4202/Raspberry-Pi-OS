@@ -96,5 +96,5 @@ init_hw()
 
     DISABLE_IRQ();
 
-    phyAlloc_init((void *) HEAP_START, 204800);
+    phyAlloc_init((void *) HEAP_START, 512000000);
 }
