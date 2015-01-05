@@ -6,6 +6,7 @@
 #include "syscall.h"
 #include "gui.h"
 #include "sem.h"
+#include "pwm.h"
 
 sem_s sem1, sem2;
 int inccc = 0;
@@ -112,6 +113,8 @@ int kmain ( void )
 	create_process(cons, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
+	
+	audio_test();
 
 	while(1) ;
 
