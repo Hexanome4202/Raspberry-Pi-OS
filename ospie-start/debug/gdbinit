@@ -4,6 +4,7 @@ wh cmd 12
 target remote:1234
 b kmain
 b ctx_switch_from_irq
+<<<<<<< HEAD
 b kernel.c:8
 b kernel.c:17
 b SWIHandler
@@ -11,4 +12,6 @@ b ctx_switch
 b kernel.c:71
 b kernel.c:97
 
+=======
+>>>>>>> b8f6daa38acdb1b1ce744efd59e91a0e6360bd70
 source include.gdb

@@ -216,7 +216,7 @@ addTranslation(uint32_t va, uint32_t pa)
 
 
 void vMem_Free(uint32_t* ptr, unsigned int nbPages){
-
+/*
 	uint8_t i;
 	for(i=0; i< nbPages; i++){
 		//GET(ptr+i*4) permet d'obtenir l'adresse physique
@@ -228,5 +228,6 @@ void vMem_Free(uint32_t* ptr, unsigned int nbPages){
 		//Ensuite faut aller dans la table des pages de niveau 2 et enlever le pointeur vers l'adresse physique
 		//(En gros faut faire un SET(.., 0))
 	}
+	*/
 }
 

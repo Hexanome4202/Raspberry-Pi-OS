@@ -98,10 +98,10 @@ int FramebufferInitialize() {
     return 0;
   }
   
-  //fb_x = mb[5]; // On récupére la largeur en pixel de l'écran
-  //fb_y = mb[6]; // On récupére la hauteur en pixel de l'écran
-  fb_x = 800;
-  fb_y = 600;  
+  fb_x = mb[5]; // On récupére la largeur en pixel de l'écran
+  fb_y = mb[6]; // On récupére la hauteur en pixel de l'écran
+  //fb_x = 400;
+  //fb_y = 400;  
 
 
   uint32 mb_pos=1;
@@ -255,4 +255,18 @@ void drawBlue() {
       put_pixel_RGB24(x,y,0,0,255);
     }
   }
+}
+
+/*
+ * Returns width
+ */
+uint32 getWidth() {
+	return fb_x;
+}
+
+/** 
+ * Returns height
+ */
+uint32 getHeight() {
+	return fb_y;
 }
