@@ -70,15 +70,17 @@ void prod() {
 	while(1) {
 		sem_down(&sem1);
 		++inccc;
-		sem_up(&sem2);
+		sem_up(&sem2);		
+		sys_wait(1);
 	}
 }	
 
 void cons() {
 	while(1) {
 		sem_down(&sem2);
-		--inccc;
+		--inccc;		
 		sem_up(&sem1);
+		sys_wait(1);
 	}
 }
 
@@ -102,12 +104,12 @@ int kmain ( void )
 	sem_init(&sem2, 0);
 
 	//create_process(ledON,NULL,STACK_SIZE, NORMAL);
-	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
+	//create_process(funcRed, NULL, STACK_SIZE, NORMAL);
 	//create_process(ledOFF,NULL,STACK_SIZE, NORMAL);	
-	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
+	//create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
-	//create_process(prod, NULL, STACK_SIZE, NORMAL);
-	//create_process(cons, NULL, STACK_SIZE, NORMAL);
+	create_process(prod, NULL, STACK_SIZE, NORMAL);
+	create_process(cons, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 
