@@ -1,7 +1,6 @@
 #include "sched.h"
 #include "vmem.h"
 #include "fb.h"
-#include "translate.c"
 #include "hw.h"
 #include "syscall.h"
 
@@ -74,6 +73,7 @@ int kmain ( void )
 	FramebufferInitialize();
 	draw();
 
+	/*
 	create_process(ledON,NULL,STACK_SIZE, NORMAL);
 	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
 	create_process(ledOFF,NULL,STACK_SIZE, NORMAL);	
@@ -81,15 +81,19 @@ int kmain ( void )
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
 
 	
-	/** TITOUAN AND JUSTINE WORK
+	/** TITOUAN AND JUSTINE WORK */
+
 	init_kern_translation_table();
 	configure_mmu_C();
 	unsigned int pa = translate(0x10022);
 	start_mmu_C();
 	
-	uint8_t* adresse = vMem_Alloc(5);
+	uint32_t* adresse = vMem_Alloc(5);
 	unsigned int pa1 = translate(adresse);
-	**/
+
+	uint32_t* adresse2 = vMem_Alloc(10);
+	unsigned int pa2 = translate(adresse2);
+	
 	start_sched();
 
 	while(1) ;

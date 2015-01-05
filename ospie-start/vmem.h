@@ -34,8 +34,8 @@ void configure_mmu_C();
 
 void init_frame_tab();
 
-uint8_t* vMem_Alloc(unsigned int nbPages);
+uint32_t* vMem_Alloc(unsigned int nbPages);
 
-void vMem_Free(uint8_t* ptr, unsigned int nbPages);
+void vMem_Free(uint32_t* ptr, unsigned int nbPages);
 
 #endif

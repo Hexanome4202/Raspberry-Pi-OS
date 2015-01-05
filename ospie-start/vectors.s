@@ -53,7 +53,7 @@ hang: b hang
 undefined:	 b undefined
 swi:	 b SWIHandler
 prefetch:	b prefetch
-data:	 b data
+data:	 b handle_data
 unused:	b unused
 fiq:	b fiq
 
