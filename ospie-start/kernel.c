@@ -85,6 +85,13 @@ void cons() {
 	}
 }
 
+void paint() {
+	while(1) {
+		guiPainter();
+		sys_wait(5);
+	}
+}
+
 //------------------------------------------------------------------------
 int kmain ( void )
 {
@@ -97,9 +104,10 @@ int kmain ( void )
 	//create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 
-	guiInitialize();
 	FramebufferInitialize();
-	draw();
+	guiInitialize();
+	//draw();
+	guiPainter();
 
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
@@ -111,6 +119,7 @@ int kmain ( void )
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
 	create_process(prod, NULL, STACK_SIZE, NORMAL);
 	create_process(cons, NULL, STACK_SIZE, NORMAL);
+	create_process(paint, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
