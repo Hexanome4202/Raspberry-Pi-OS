@@ -6,7 +6,6 @@
 #include "syscall.h"
 #include "gui.h"
 #include "sem.h"
-#include "pwm.h"
 
 sem_s sem1, sem2;
 int inccc = 0;
@@ -166,7 +165,6 @@ int kmain ( void )
 	FramebufferInitialize();
 	guiInitialize();
 	//draw();
-	guiPainter();
 
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
