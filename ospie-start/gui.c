@@ -55,7 +55,7 @@ void addWhiteSquare(uint32 x, uint32 y, uint32 sizex, uint32 sizey){
 	for(i=0; i< sizex; ++i){
 		matrix[i] = (pixel*) phyAlloc_alloc(sizeof(pixel)*sizey);
 		for(j=0; j<sizey; ++j){
-			matrix[i][j].red = 255;
+			matrix[i][j].red = 0;
 			matrix[i][j].green = 255;
 			matrix[i][j].blue = 255;
 		}

@@ -183,7 +183,7 @@ int kmain ( void )
 
 	start_sched();
 	
-	audio_test();
+	//audio_test();
 
 	while(1) ;
 

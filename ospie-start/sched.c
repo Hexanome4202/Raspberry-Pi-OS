@@ -15,8 +15,8 @@ void init_sched(){
 	init_pcb(IDLE, funct_idle, NULL, STACK_SIZE, NORMAL);
 	current_blocked = NULL;
 	
-	//scheduler_function = sched_round_robin;
-	scheduler_function = sched_fixed_priority;
+	scheduler_function = sched_round_robin;
+	//scheduler_function = sched_fixed_priority;
 
 	if(scheduler_function == sched_round_robin){
 		queue_round_robin->first = NULL;
