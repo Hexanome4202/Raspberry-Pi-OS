@@ -955,13 +955,10 @@ void display_text(char* text, int size, int posX, int posY) {
       // loop through pixel rows
       for (y = 0; y < FONTH; y++) {
           // loop through pixel columns
-          draw();
           for (x = 0; x < FONTW; x++) {
               // get the pixel value
               int b = img[y * FONTW + x];
-              drawBlue();
               if (b > 0) { // plot the pixel
-                  drawRed();
                   put_pixel_RGB24(posX + i * FONTW + x, posY + y, 200, 100, 50);
               }
               else { 

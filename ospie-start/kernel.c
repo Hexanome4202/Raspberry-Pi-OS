@@ -153,10 +153,11 @@ void movingR(){
 
 void movingText() {
 	// FIXME
-	char text[3];
-	text[0] = 'l';
-	text[1] = 'o';
-	text[2] = 'l';
+	//char text[3];
+	//text[0] = 'A';
+	//text[1] = 'A';
+	//text[2] = 'A';
+	char* text = "AAA";
 	display_text(text, 3, 20, 20);
 }
 
@@ -198,8 +199,8 @@ int kmain ( void )
 	//create_process(cons, NULL, STACK_SIZE, NORMAL);
 	//create_process(paint, NULL, STACK_SIZE, NORMAL);
 	//create_process(movingR, NULL, STACK_SIZE, NORMAL);
-	//create_process(movingText, NULL, STACK_SIZE, NORMAL);
-	create_process(forms, NULL, STACK_SIZE, NORMAL);
+	create_process(movingText, NULL, STACK_SIZE, NORMAL);
+	//create_process(forms, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
