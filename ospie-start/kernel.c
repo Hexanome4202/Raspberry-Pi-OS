@@ -111,13 +111,13 @@ void movingR(){
 		addBlackSquare(sizeSquare*2+posX,sizeSquare*3+posY,sizeSquare,sizeSquare);
 		addBlackSquare(sizeSquare*3+posX,sizeSquare*4+posY,sizeSquare,sizeSquare);
 		
-		if(posX+(sizeSquare*3) >= width){
+		if(posX+(sizeSquare*4) >= width){
 			speedX = -1*speedX;
 		}
 		else if(posX <= 0 && speedX < 0){
 			speedX = -1*speedX;	
 		}
-		if(posY+(sizeSquare*4) >= height){
+		if(posY+(sizeSquare*5) >= height){
 			speedY = -1*speedY;
 		}
 		else if(posY <= 0 && speedY < 0){
@@ -151,6 +151,24 @@ void movingR(){
 	}
 }
 
+void movingText() {
+	// FIXME
+	char text[3];
+	text[0] = 'l';
+	text[1] = 'o';
+	text[2] = 'l';
+	display_text(text, 3, 20, 20);
+}
+
+void forms() {
+	int i;
+	for(i = 0; i < getWidth(); ++i) {
+		drawCircle(100 + i, 100 + i, 40, 120, 210, 18);
+		drawLine(10 + i, 100 + i, 100 + i, 10 + i, 250, 0, 0);
+		//sys_wait(1);
+	}
+}
+
 //------------------------------------------------------------------------
 int kmain ( void )
 {
@@ -166,6 +184,8 @@ int kmain ( void )
 	guiInitialize();
 	//draw();
 
+	//display_text("lol", 3, 20, 20);
+
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
 
@@ -177,7 +197,9 @@ int kmain ( void )
 	//create_process(prod, NULL, STACK_SIZE, NORMAL);
 	//create_process(cons, NULL, STACK_SIZE, NORMAL);
 	//create_process(paint, NULL, STACK_SIZE, NORMAL);
-	create_process(movingR, NULL, STACK_SIZE, NORMAL);
+	//create_process(movingR, NULL, STACK_SIZE, NORMAL);
+	//create_process(movingText, NULL, STACK_SIZE, NORMAL);
+	create_process(forms, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
