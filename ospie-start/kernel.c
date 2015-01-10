@@ -157,8 +157,13 @@ void movingText() {
 	//text[0] = 'A';
 	//text[1] = 'A';
 	//text[2] = 'A';
-	char* text = "AAA";
-	display_text(text, 3, 20, 20);
+	char* text = "REMI";
+	int i = 0;
+	while(1) {
+		display_text(text, 3, 20 + i, 20 + i);
+		++i;
+		sys_wait(1);
+	}
 }
 
 void forms() {
