@@ -88,15 +88,26 @@ void paint() {
 }
 
 void movingR(){
-	uint32 speedX =10, speedY=10;
+	int speedX =1, speedY=1;
 	uint32 width = getWidth();
 	uint32 height = getHeight();
 	uint32 posX = 0, posY = 0;
-	uint32 sizeSquare = 50;
-	uint32 minX, maxX, minY, maxY;
+	uint32 sizeSquare = 10;
+	uint32 minX =0, maxX =0, minY = 0, maxY =0;
 	while(1) {
-		minX = posX;
-		minY = posY;
+		if(posX >= speedX){
+			minX = posX-speedX;
+		}
+		else{
+			minX = 0;
+		}
+
+		if(posY >= speedY){
+			minY = posY-speedY;
+		}
+		else{
+			minY = 0;
+		}
 		
 		addBlackSquare(posX,posY,sizeSquare,sizeSquare);
 		addBlackSquare(posX,sizeSquare+posY,sizeSquare,sizeSquare);
@@ -111,25 +122,46 @@ void movingR(){
 		addBlackSquare(sizeSquare*2+posX,sizeSquare*3+posY,sizeSquare,sizeSquare);
 		addBlackSquare(sizeSquare*3+posX,sizeSquare*4+posY,sizeSquare,sizeSquare);
 		
-		if(posX+(sizeSquare*3) >= width){
+		if((posX+(sizeSquare*4) >= width && speedX > 0) || (posX <= 0 && speedX < 0)){
 			speedX = -1*speedX;
 		}
-		else if(posX <= 0 && speedX < 0){
-			speedX = -1*speedX;	
-		}
-		if(posY+(sizeSquare*4) >= height){
+		if((posY+(sizeSquare*5) >= height && speedY > 0)|| (posY <= 0 && speedY < 0)){
 			speedY = -1*speedY;
 		}
-		else if(posY <= 0 && speedY < 0){
-			speedY = -1*speedY;	
-		}
-		posX += speedX;
-		posY += speedY;
 
-		maxX = posX+sizeSquare*5;
-		maxY = posY+sizeSquare*5;
+		if(speedX < 0 && posX < speedX*-1){
+			posX = 0;
+		}
+		else{
+			posX += speedX;
+		}
+
+		if(speedY < 0 && posY < speedY*-1){
+			posY = 0;
+		}
+		else{
+			posY += speedY;
+		}
+
+		maxX = posX + sizeSquare*4;
+		maxY = posY + sizeSquare*5;
+		
+		if(speedX > 0){
+			maxX += speedX;
+		}
+		else{
+			maxX -= speedX;
+		}
+
+		if(speedY > 0){
+			maxY += speedY;
+		}
+		else{
+			maxY -= speedY;
+		}
+
 		if(maxX > width){
-			maxX= width;
+			maxX = width;
 		}
 		if(maxY > height){
 			maxY = height;
@@ -148,6 +180,7 @@ void movingR(){
 		addWhiteSquare(sizeSquare*2+posX,sizeSquare*3+posY,sizeSquare,sizeSquare);
 		addWhiteSquare(sizeSquare*3+posX,sizeSquare*4+posY,sizeSquare,sizeSquare);
 		guiPainter(minX,maxX,minY,maxY);
+		//guiPainter(0,width,0,height);
 	}
 }
 
