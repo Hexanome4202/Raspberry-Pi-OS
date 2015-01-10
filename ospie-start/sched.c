@@ -146,6 +146,11 @@ pcb_s* sched_round_robin(){
 		}
 		//if process is alone
 	} else {
+		if(current->sleepingTime>0){
+			(current->sleepingTime)--;
+		}else{
+			current->state=READY;
+		}
 		// if process can't be run
 		if(current->state == TERMINATED || current->state == WAITING){
 			return IDLE;
