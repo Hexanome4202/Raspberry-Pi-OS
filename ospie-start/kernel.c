@@ -105,9 +105,9 @@ int kmain ( void )
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 
 	FramebufferInitialize();
-	guiInitialize();
+	//guiInitialize();
 	//draw();
-	guiPainter();
+	//guiPainter();
 
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
@@ -117,9 +117,9 @@ int kmain ( void )
 	//create_process(ledOFF,NULL,STACK_SIZE, NORMAL);	
 	//create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
-	create_process(prod, NULL, STACK_SIZE, NORMAL);
-	create_process(cons, NULL, STACK_SIZE, NORMAL);
-	create_process(paint, NULL, STACK_SIZE, NORMAL);
+	//create_process(prod, NULL, STACK_SIZE, NORMAL);
+	//create_process(cons, NULL, STACK_SIZE, NORMAL);
+	//create_process(paint, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
