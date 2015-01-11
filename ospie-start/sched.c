@@ -146,11 +146,6 @@ pcb_s* sched_round_robin(){
 		}
 		//if process is alone
 	} else {
-		if(current->sleepingTime>0){
-			(current->sleepingTime)--;
-		}else{
-			current->state=READY;
-		}
 		// if process can't be run
 		if(current->state == TERMINATED || current->state == WAITING){
 			return IDLE;
@@ -250,6 +245,7 @@ pcb_s* sched_fixed_priority(){
 
 void start_sched(){
 	current_process=IDLE;
+	IDLE->next = queue_round_robin->first;
 	ENABLE_IRQ();
 	set_tick_and_enable_timer_with_time(INTERRUPT_TIME(current_process->priority));
 }
@@ -267,8 +263,9 @@ void __attribute__ ((naked)) ctx_switch_from_irq(){
 	__asm("mov %0, sp" : "=r"(current_process->ctx->sp));
 
 	//2. demande au scheduler d’élire un nouveau processus
-	elect();
-
+	//elect();
+	current_process = queue_round_robin->first;
+	
 	//3. restaure le contexte du processus élu
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));
 
@@ -291,7 +288,7 @@ void __attribute__ ((naked)) ctx_switch(){
 	__asm("mov %0, sp" : "=r"(current_process->ctx->sp));	
 
 	//2. demande au scheduler d’élire un nouveau processus
-	elect();
+	//elect();
 
 	//3. restaure le contexte du processus élu
 	__asm("mov sp, %0" : : "r"(current_process->ctx->sp));	

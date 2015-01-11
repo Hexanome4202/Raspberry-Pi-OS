@@ -60,11 +60,7 @@ unsigned int init_kern_translation_table(){
 				SET32(entry_add,entry2);
 				//*(entry_add)= entry2;
 
-			} else if(phys_add >= ADDR_TAB_FRAME_OCC && phys_add<= 0x20000000){
-				uint32_t entry2 = (phys_add| device_flags);
-				SET32(entry_add,entry2);
-
-			} else if(i<5) {
+			}else if(i<5){
 				
 				uint32_t entry2 = (phys_add| device_flags);
 				SET32(entry_add,entry2);
@@ -86,14 +82,12 @@ void start_mmu_C()
 	__asm("mcr p15, 0, r0, c7, c7, 0"); //Invalidate cache (data and instructions) */
 	__asm("mcr p15, 0, r0, c8, c7, 0"); //Invalidate TLB entries
 	/* Enable ARMv6 MMU features (disable sub-page AP) */
-	//__asm volatile("mrc p15, 0 , %[control], c1, c0,0": [control] "=r"(control));
+	__asm volatile("mrc p15, 0 , %[control], c1, c0,0": [control] "=r"(control));
 	control = (1<<23) | (1 << 15) | (1 << 4) | 1;
 	/* Invalidate the translation lookaside buffer (TLB) */
 	__asm volatile("mcr p15, 0, %[data], c8, c7, 0" : : [data] "r" (0));
 	/* Write control register */
 	__asm volatile("mcr p15, 0, %[control], c1, c0, 0" : : [control] "r" (control));
-
-	init_frame_tab();
 }
 
 void configure_mmu_C()
@@ -110,37 +104,42 @@ void configure_mmu_C()
 	* Every mapped section/page is in domain 0
 	*/
 	__asm volatile("mcr p15, 0, %[r], c3, c0, 0" : : [r] "r" (0x3));
-
-
 }
 
 void init_frame_tab(){
 	
-	uint32_t i;
-	for(i=1; i< TAB_FRAME_SIZE; i++){
-		uint32_t addr = ADDR_TAB_FRAME_OCC+i;
-		translate(addr);
+	uint8_t i;
+	for(i=0; i< TAB_FRAME_SIZE; i++){
 		if(i< 50000/4 || i>0x1FFDEFFF){
-			SET32(addr, 1);
+			SET32(ADDR_TAB_FRAME_OCC+i, 1);
 		}else{
-			SET32(addr, 0);
+			SET32(ADDR_TAB_FRAME_OCC+i, 0);
 		}
 	}
 }
 
-uint32_t* vMem_Alloc(unsigned int nbPages){
+uint8_t* vMem_Alloc(unsigned int nbPages){
 
+	uint32_t flags = 
+		  ((0 << 0)
+		| (1 << 1)
+		| (0 << 2)
+		| (0 << 3)
+		| (0b00 << 4)
+		| (0b000 << 6)
+		| (0 << 9)
+		| (0 << 10)
+		| (0 << 11));
 	
-	
-	uint32_t secondLevelTtAdd = ADDR_TAB_LVL_1 + 4 * FIRST_LVL_TT_COUN;
+	uint8_t secondLevelTtAdd = ADDR_TAB_LVL_1 + 4 * FIRST_LVL_TT_COUN;
 	int nbFound = 0;
-	uint32_t first = 0;
+	uint8_t first = 0;
 
 
 	//Parcours des adresses virtuelles
  	// 553648127 = 20FFFFFF
- 	uint32_t i;
-	for(i = 0 ; i < 553648127 && nbFound < nbPages ; i+= 4096){
+ 	uint8_t i;
+	for(i = 0 ; i < 553648127 ; i+= 4096){
 		if(translate(i) == 0){
 			if(nbFound == 0)
 				first = i;
@@ -158,76 +157,34 @@ uint32_t* vMem_Alloc(unsigned int nbPages){
 		uint32_t vir_add = first + 4096*j;
 
 		//i index dans la table d'occupation + adresse de la table d'occupation + l'index de la première adresse utilisable
-		for(i=ADDR_TAB_FRAME_OCC+50004/4; i< 135168+ADDR_TAB_FRAME_OCC; i++ ){
+		for(i=ADDR_TAB_FRAME_OCC+50000/4; i< 135168+ADDR_TAB_FRAME_OCC; i++ ){
 			if(GET32(i) == 0){
-				uint32_t adrresse = i-ADDR_TAB_FRAME_OCC;
-				uint32_t phys_add = adrresse*4096;
+				uint32_t phys_add = (i-ADDR_TAB_FRAME_OCC)*4096;
 
 				//PASSER TABLE D'OCCUPATION A 1
 				SET32(i ,1);
 
-				addTranslation(vir_add, phys_add);
-				break;
+				uint32_t entry_add = (vir_add >> 12) && (000000000001111111);
+
+				uint32_t entry2 = (phys_add|flags);
+				SET32(entry_add,entry2);
 			}
 		}
 	}
 
-	return (uint32_t*) first;
+	return (uint8_t*) first;
 
 }
 
-void
-addTranslation(uint32_t va, uint32_t pa)
-{	
-	unsigned int table_base;
-	 __asm("mrc p15, 0, %[tb], c2, c0, 0" : [tb] "=r"(table_base));
-  
-  	table_base = table_base & 0xFFFFC000;
-
-	uint32_t flags = 
-		  ((0 << 0)
-		| (1 << 1)
-		| (0 << 2)
-		| (0 << 3)
-		| (0b00 << 4)
-		| (0b000 << 6)
-		| (0 << 9)
-		| (0 << 10)
-		| (0 << 11));
-
-	uint32_t entry2 = (pa|flags);
-
-
-	uint32_t first_level_index = (va >> 20);
-  	uint32_t second_level_index = ((va << 12) >> 24);
-  	uint32_t page_index = (va & 0x00000FFF);
-
-  	/* First level descriptor */
-  	uint32_t* first_level_descriptor_address = (unsigned int*) (table_base | (first_level_index << 2));
-  	uint32_t first_level_descriptor = *(first_level_descriptor_address);
-
-  	/* Second level descriptor */
-  	uint32_t second_level_table = first_level_descriptor & 0xFFFFFC00;
-  	uint32_t* second_level_descriptor_address = (unsigned int*) (second_level_table | (second_level_index << 2));
-  	uint32_t second_level_descriptor = *((unsigned int*) second_level_descriptor_address);    
-
-  	SET32(second_level_descriptor_address,entry2);
-}
-
-
-void vMem_Free(uint32_t* ptr, unsigned int nbPages){
 /*
+void vMem_Free(uint8_t* ptr, unsigned int nbPages){
+
 	uint8_t i;
 	for(i=0; i< nbPages; i++){
 		//GET(ptr+i*4) permet d'obtenir l'adresse physique
-		uint32_t* phy_add = GET(ptr+i*4);
-
-		SET(phys_add/4096+ADDR_TAB_FRAME_OCC, 0);
-		SET(ptr+i, 0);
-
-		//Ensuite faut aller dans la table des pages de niveau 2 et enlever le pointeur vers l'adresse physique
-		//(En gros faut faire un SET(.., 0))
+		//qu'on divise par 4 pour avoir l'adresse de la table des occupations
+		SET( GET(ptr+i*4)/4, 0 );
+		SET32(ptr+i , 0);
 	}
-	*/
 }
-
+*/

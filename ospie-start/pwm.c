@@ -70,7 +70,7 @@ audio_test()
   long status;
   audio_init();
 
-  while (i < 1000000) {
+  while (i < 100000) {
 	DISABLE_IRQ();
     status =  *(pwm + BCM2835_PWM_STATUS);
     if (!(status & BCM2835_FULL1)) {
