@@ -41,6 +41,11 @@ void funcBlue()
 	}
 }
 
+void funcBlueOne()
+{
+	drawBlue();
+}
+
 void led() {
 	while(1){
 		led_on();
@@ -239,7 +244,7 @@ int kmain ( void )
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
 
-	create_process(funcBlue, NULL, STACK_SIZE, HIGH);
+	create_process(funcBlueOne, NULL, STACK_SIZE, HIGH);
 	create_process(ledON,NULL,STACK_SIZE, NORMAL);
 	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
 	create_process(ledOFF,NULL,STACK_SIZE, NORMAL);
