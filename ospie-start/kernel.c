@@ -214,6 +214,11 @@ void fire() {
         }
 }
 
+void hexanome() {
+	char* text = "HEXANOME 4202";
+	display_text(text, 13, getWidth()/2 - (FONTW * 13) / 2, getHeight()/2);
+}
+
 //------------------------------------------------------------------------
 int kmain ( void )
 {
@@ -246,6 +251,7 @@ int kmain ( void )
 	//create_process(movingText, NULL, STACK_SIZE, NORMAL);
 	//create_process(forms, NULL, STACK_SIZE, NORMAL);
 	create_process(fire, NULL, STACK_SIZE, NORMAL);
+	create_process(hexanome, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
