@@ -245,9 +245,9 @@ int kmain ( void )
 	sem_init(&sem2, 0);
 
 	create_process(funcBlueOne, NULL, STACK_SIZE, HIGH);
-	create_process(ledON,NULL,STACK_SIZE, NORMAL);
+	//create_process(ledON,NULL,STACK_SIZE, NORMAL);
 	create_process(funcRed, NULL, STACK_SIZE, NORMAL);
-	create_process(ledOFF,NULL,STACK_SIZE, NORMAL);
+	//create_process(ledOFF,NULL,STACK_SIZE, NORMAL);
 	create_process(funcBlue, NULL, STACK_SIZE, NORMAL);
 	create_process(fire,NULL,STACK_SIZE, LOW);
 	//create_process(led_off,NULL,STACK_SIZE, LOW);
