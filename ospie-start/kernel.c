@@ -230,7 +230,7 @@ int kmain ( void )
 	//create_process(funcA, NULL, STACK_SIZE, NORMAL);
 	//create_process(init_kern_translation_table, NULL, STACK_SIZE, NORMAL);
 
-	//FramebufferInitialize();
+	FramebufferInitialize();
 	//guiInitialize();
 	//draw();
 
