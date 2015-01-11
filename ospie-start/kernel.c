@@ -6,7 +6,7 @@
 #include "syscall.h"
 #include "gui.h"
 #include "sem.h"
-#include "pwm.h"
+#include "maths.h"
 
 sem_s sem1, sem2;
 int inccc = 0;
@@ -112,13 +112,13 @@ void movingR(){
 		addBlackSquare(sizeSquare*2+posX,sizeSquare*3+posY,sizeSquare,sizeSquare);
 		addBlackSquare(sizeSquare*3+posX,sizeSquare*4+posY,sizeSquare,sizeSquare);
 		
-		if(posX+(sizeSquare*3) >= width){
+		if(posX+(sizeSquare*4) >= width){
 			speedX = -1*speedX;
 		}
 		else if(posX <= 0 && speedX < 0){
 			speedX = -1*speedX;	
 		}
-		if(posY+(sizeSquare*4) >= height){
+		if(posY+(sizeSquare*5) >= height){
 			speedY = -1*speedY;
 		}
 		else if(posY <= 0 && speedY < 0){
@@ -152,6 +152,73 @@ void movingR(){
 	}
 }
 
+void movingText() {
+	// FIXME
+	//char text[3];
+	//text[0] = 'A';
+	//text[1] = 'A';
+	//text[2] = 'A';
+	char* text = "REMI";
+	display_text(text, 4, 20, 20);
+	sys_wait(1);
+}
+
+void forms() {
+	int i;
+	for(i = 0; i < getWidth(); ++i) {
+		drawCircle(100 + i, 100 + i, 40, 120, 210, 18);
+		drawLine(10 + i, 100 + i, 100 + i, 10 + i, 250, 0, 0);
+		//sys_wait(1);
+	}
+}
+
+void fire() {
+	// Draw
+        int maxx = getWidth() - 1;
+        int maxy = getHeight() - 1;
+        int n = 0, r, c, x, y;
+        int c0, c1, c2;
+        while (n++ < 200) {
+            // seed
+            for (x = 1; x < maxx; x++) {
+
+                r = rand();
+                c = (r % 4 == 0) ? 192 : 32;
+                put_pixel(x, maxy, c);
+                if ((r % 4 == 0)) { // && (r % 3 == 0)) {
+                    c = 2 * c / 3;
+                    put_pixel(x - 1, maxy, c);
+                    put_pixel(x + 1, maxy, c);
+                }
+            }
+
+            // smooth
+            for (y = 1; y < maxy - 1; y++) {
+                for (x = 1; x < maxx; x++) {
+                    c0 = get_pixel(x - 1, y);
+                    c1 = get_pixel(x, y + 1);
+                    c2 = get_pixel(x + 1, y);
+                    c = (c0 + c1 + c1 + c2) / 4;
+                    put_pixel(x, y - 1, c);
+                }
+            }
+
+            // convect
+            for (y = 0; y < maxy; y++) {
+                for (x = 1; x < maxx; x++) {
+                    c = get_pixel(x, y + 1);
+                    if (c > 0) c--;
+                    put_pixel(x, y, c);
+                }
+            }
+        }
+}
+
+void hexanome() {
+	char* text = "HEXANOME 4202";
+	display_text(text, 13, getWidth()/2 - (FONTW * 13) / 2, getHeight()/2);
+}
+
 //------------------------------------------------------------------------
 int kmain ( void )
 {
@@ -166,7 +233,8 @@ int kmain ( void )
 	FramebufferInitialize();
 	guiInitialize();
 	//draw();
-	guiPainter();
+
+	//display_text("lol", 3, 20, 20);
 
 	sem_init(&sem1, 1);
 	sem_init(&sem2, 0);
@@ -179,7 +247,11 @@ int kmain ( void )
 	//create_process(prod, NULL, STACK_SIZE, NORMAL);
 	//create_process(cons, NULL, STACK_SIZE, NORMAL);
 	//create_process(paint, NULL, STACK_SIZE, NORMAL);
-	create_process(movingR, NULL, STACK_SIZE, NORMAL);
+	//create_process(movingR, NULL, STACK_SIZE, NORMAL);
+	//create_process(movingText, NULL, STACK_SIZE, NORMAL);
+	//create_process(forms, NULL, STACK_SIZE, NORMAL);
+	create_process(fire, NULL, STACK_SIZE, NORMAL);
+	create_process(hexanome, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	

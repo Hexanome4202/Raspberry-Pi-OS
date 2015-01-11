@@ -4,4 +4,4 @@
 *.elf
 *.img
 *.list
-
+run-qemu.sh

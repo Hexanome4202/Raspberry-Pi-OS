@@ -6,6 +6,9 @@
  * Intro au framebuffer: http://magicsmoke.co.za/?p=284
  */
 
+// ----- Char(s)
+#define FONTW 8
+#define FONTH 8
 
 /*
  * Mailbox functions
@@ -56,7 +59,12 @@ void drawRed();
 
 void drawBlue();
 
+void clear();
+
 uint32 getWidth();
 uint32 getHeight();
+
+void put_pixel(uint32 x, uint32 y, int c);
+char get_pixel(uint32 x, uint32 y);
 
 #endif
