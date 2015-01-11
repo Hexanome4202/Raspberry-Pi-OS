@@ -64,4 +64,7 @@ void clear();
 uint32 getWidth();
 uint32 getHeight();
 
+void put_pixel(uint32 x, uint32 y, int c);
+char get_pixel(uint32 x, uint32 y);
+
 #endif

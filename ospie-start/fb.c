@@ -867,6 +867,26 @@ void put_pixel_RGB24(uint32 x, uint32 y, uint8 red, uint8 green, uint8 blue)
 	*((uint8*)(ptr+2)) = blue;
 }
 
+void put_pixel(uint32 x, uint32 y, int c)
+{
+	volatile uint32 *ptr=0;
+	uint32 offset=0;
+
+	offset = (y * pitch) + (x * 3);
+	ptr = (uint32*)(fb_address + offset);
+	*((uint8*)ptr) = c;
+}
+
+char get_pixel(uint32 x, uint32 y)
+{
+	volatile uint32 *ptr=0;
+	uint32 offset=0;
+
+	offset = (y * pitch) + (x * 3);
+	ptr = (uint32*)(fb_address + offset);
+	return *((char*)ptr);
+}
+
 /*
  * Dessine sur tous les pixels des couleurs différentes
  */

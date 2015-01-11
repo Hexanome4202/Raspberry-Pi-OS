@@ -6,6 +6,7 @@
 #include "syscall.h"
 #include "gui.h"
 #include "sem.h"
+#include "maths.h"
 
 sem_s sem1, sem2;
 int inccc = 0;
@@ -158,12 +159,8 @@ void movingText() {
 	//text[1] = 'A';
 	//text[2] = 'A';
 	char* text = "REMI";
-	int i = 0;
-	while(1) {
-		display_text(text, 3, 20 + i, 20 + i);
-		++i;
-		sys_wait(1);
-	}
+	display_text(text, 4, 20, 20);
+	sys_wait(1);
 }
 
 void forms() {
@@ -173,6 +170,48 @@ void forms() {
 		drawLine(10 + i, 100 + i, 100 + i, 10 + i, 250, 0, 0);
 		//sys_wait(1);
 	}
+}
+
+void fire() {
+	// Draw
+        int maxx = getWidth() - 1;
+        int maxy = getHeight() - 1;
+        int n = 0, r, c, x, y;
+        int c0, c1, c2;
+        while (n++ < 200) {
+            // seed
+            for (x = 1; x < maxx; x++) {
+
+                r = rand();
+                c = (r % 4 == 0) ? 192 : 32;
+                put_pixel(x, maxy, c);
+                if ((r % 4 == 0)) { // && (r % 3 == 0)) {
+                    c = 2 * c / 3;
+                    put_pixel(x - 1, maxy, c);
+                    put_pixel(x + 1, maxy, c);
+                }
+            }
+
+            // smooth
+            for (y = 1; y < maxy - 1; y++) {
+                for (x = 1; x < maxx; x++) {
+                    c0 = get_pixel(x - 1, y);
+                    c1 = get_pixel(x, y + 1);
+                    c2 = get_pixel(x + 1, y);
+                    c = (c0 + c1 + c1 + c2) / 4;
+                    put_pixel(x, y - 1, c);
+                }
+            }
+
+            // convect
+            for (y = 0; y < maxy; y++) {
+                for (x = 1; x < maxx; x++) {
+                    c = get_pixel(x, y + 1);
+                    if (c > 0) c--;
+                    put_pixel(x, y, c);
+                }
+            }
+        }
 }
 
 //------------------------------------------------------------------------
@@ -204,8 +243,9 @@ int kmain ( void )
 	//create_process(cons, NULL, STACK_SIZE, NORMAL);
 	//create_process(paint, NULL, STACK_SIZE, NORMAL);
 	//create_process(movingR, NULL, STACK_SIZE, NORMAL);
-	create_process(movingText, NULL, STACK_SIZE, NORMAL);
+	//create_process(movingText, NULL, STACK_SIZE, NORMAL);
 	//create_process(forms, NULL, STACK_SIZE, NORMAL);
+	create_process(fire, NULL, STACK_SIZE, NORMAL);
 
 	start_sched();
 	
