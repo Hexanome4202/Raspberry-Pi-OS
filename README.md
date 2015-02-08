@@ -1,7 +1,8 @@
 tp-raspberry
 ============
 
-A simple Raspberry Pi OS.
+Development of a simple Raspberry Pi OS.
+Course work.
 
 ## Features
 1. Round Robin scheduler
