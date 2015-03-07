@@ -1,4 +1,4 @@
-tp-raspberry
+Raspberry Pi OS
 ============
 
 Development of a simple Raspberry Pi OS.
